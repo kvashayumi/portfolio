@@ -1,0 +1,1276 @@
+/* --- ОСНОВНІ СТИЛІ --- */
+:root { 
+    --accent: #000; 
+    --text-muted: #666; 
+}
+
+html {
+    overflow-x: hidden;
+    max-width: 100%;
+    -webkit-tap-highlight-color: transparent;
+}
+
+body { 
+    font-family: 'Inter', sans-serif; 
+    color: #000; 
+    background: #fff; 
+    scroll-behavior: smooth;
+    overflow-x: hidden;
+    max-width: 100%;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+.section-padding { 
+    padding: 100px 0; 
+}
+
+/* --- Навігація --- */
+.navbar { 
+    height: 80px; 
+    transition: 0.3s; 
+    z-index: 1050; 
+}
+
+.nav-overlay {
+    display: none;
+    position: fixed;
+    top: 80px;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0,0,0,0.5);
+    z-index: 1039;
+    opacity: 0;
+    transition: opacity 0.35s ease;
+}
+.nav-overlay.show {
+    opacity: 1;
+}
+
+.navbar-collapse {
+    position: fixed !important;
+    top: 80px !important;
+    right: 0 !important;
+    left: auto !important;
+    width: 75vw !important;
+    max-width: 320px !important;
+    height: calc(100vh - 80px) !important;
+    background: #fff !important;
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: center !important;
+    padding: 40px 36px !important;
+    z-index: 1040 !important;
+    transform: translateX(100%) !important;
+    transition: transform 0.35s ease !important;
+    box-shadow: -8px 0 32px rgba(0,0,0,0.12);
+}
+
+.navbar-collapse.show {
+    transform: translateX(0) !important;
+}
+
+@media (max-width: 991px) {
+    .navbar-collapse .navbar-nav {
+        flex-direction: column !important;
+        align-items: flex-start !important;
+        width: 100%;
+    }
+
+    .navbar-collapse .nav-link {
+        font-size: 1.5rem !important;
+        font-weight: 700 !important;
+        color: #000 !important;
+        margin: 8px 0 !important;
+        padding: 4px 0 !important;
+        opacity: 0;
+        transform: translateX(16px);
+        transition: opacity 0.3s ease, transform 0.3s ease;
+    }
+
+    .navbar-collapse.show .nav-link {
+        opacity: 1 !important;
+        transform: translateX(0) !important;
+    }
+
+    .navbar-collapse.show li:nth-child(1) .nav-link { transition-delay: 0.08s; }
+    .navbar-collapse.show li:nth-child(2) .nav-link { transition-delay: 0.13s; }
+    .navbar-collapse.show li:nth-child(3) .nav-link { transition-delay: 0.18s; }
+    .navbar-collapse.show li:nth-child(4) .nav-link { transition-delay: 0.23s; }
+
+    .navbar-collapse .nav-link:hover { opacity: 0.4 !important; }
+
+    .navbar-collapse .ms-lg-4 {
+        margin-top: 32px !important;
+        padding-top: 24px !important;
+        border-top: 1px solid #eee !important;
+        width: 100% !important;
+    }
+
+    .navbar-collapse .btn-lang {
+        color: #000 !important;
+        font-size: 14px !important;
+        font-weight: 600 !important;
+        opacity: 0.5 !important;
+        text-decoration: none !important;
+        border: none !important;
+        background: none !important;
+    }
+
+    .navbar-collapse .btn-lang:hover { opacity: 1 !important; }
+}
+
+.navbar { z-index: 1050 !important; }
+
+.nav-link { 
+    font-weight: 500; 
+    font-size: 15px; 
+    margin: 0 10px; 
+    color: #000 !important; 
+    transition: opacity 0.3s ease; 
+}
+
+.nav-link:hover { 
+    opacity: 0.5; 
+}
+
+.btn-lang { 
+    background: none; 
+    border: none; 
+    font-weight: 800; 
+    text-decoration: underline; 
+    cursor: pointer; 
+}
+
+.navbar-toggler {
+    padding: 0;
+    width: 24px;
+    height: 18px;
+    position: relative;
+    background: none !important;
+    border: none !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    outline: none !important;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    flex-shrink: 0;
+}
+.navbar-toggler:focus {
+    box-shadow: none !important;
+    outline: none !important;
+}
+
+.navbar-toggler span {
+    display: block;
+    width: 100%;
+    height: 2px;
+    background: #000;
+    border-radius: 2px;
+    transform-origin: center;
+    transition: transform 0.3s ease, opacity 0.3s ease, width 0.3s ease;
+}
+
+.navbar-toggler:not(.collapsed) span:nth-child(1) {
+    transform: translateY(8px) rotate(45deg);
+}
+.navbar-toggler:not(.collapsed) span:nth-child(2) {
+    opacity: 0;
+    width: 0;
+}
+.navbar-toggler:not(.collapsed) span:nth-child(3) {
+    transform: translateY(-8px) rotate(-45deg);
+}
+
+/* --- Hero Секція --- */
+.hero { 
+    min-height: 100vh; 
+    position: relative; 
+    display: flex; 
+    align-items: center; 
+    padding: 120px 0 60px 0; 
+}
+
+#linesCanvas { 
+    position: absolute; 
+    right: 0; 
+    top: 0; 
+    height: 100%; 
+    width: 55%; 
+    opacity: 0.3; 
+    pointer-events: none; 
+    z-index: 0;
+    overflow: hidden; 
+    -webkit-mask-image: linear-gradient(to right, transparent, black 15%);
+    mask-image: linear-gradient(to right, transparent, black 15%);
+}
+
+.hero-content { 
+    position: relative; 
+    z-index: 1; 
+}
+
+/* --- ЖИВА 3D ВІЗИТКА --- */
+@keyframes float {
+    0%, 100% { transform: translateY(0px) rotateX(0deg) rotateY(0deg); }
+    50%       { transform: translateY(-12px) rotateX(1deg) rotateY(-1deg); }
+}
+
+.card-scene {
+    perspective: 900px;
+    width: 100%;
+    max-width: 320px;
+    margin: 0 auto;
+}
+
+.business-card {
+    background: #000;
+    color: #fff;
+    padding: 40px 30px;
+    width: 100%;
+    min-height: 480px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 24px 48px rgba(0,0,0,0.22), 0 8px 16px rgba(0,0,0,0.12);
+    border-radius: 12px;
+    position: relative;
+    overflow: hidden;
+    animation: float 5s ease-in-out infinite;
+    transform-style: preserve-3d;
+    transition: box-shadow 0.3s ease, transform 0.08s linear;
+    will-change: transform;
+    cursor: pointer;
+}
+
+.business-card::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(circle at 50% 50%, rgba(255,255,255,0.12) 0%, transparent 70%);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    pointer-events: none;
+    border-radius: 12px;
+}
+
+.business-card:hover::before {
+    opacity: 1;
+}
+
+.business-card.is-tilting {
+    animation-play-state: paused;
+}
+
+.card-avatar { 
+    width: 120px; 
+    height: 120px;  
+    border-radius: 50%; 
+    object-fit: cover; 
+    margin-bottom: 20px; 
+    border: 2px solid #333; 
+    
+}
+
+.card-info { 
+    text-align: center; 
+    width: 100%; 
+}
+
+.card-name { 
+    font-size: 24px; 
+    font-weight: 700; 
+    margin-bottom: 5px; 
+}
+
+.card-role { 
+    font-size: 13px; 
+    opacity: 0.6; 
+    text-transform: uppercase; 
+    letter-spacing: 1px; 
+}
+
+.card-contacts { 
+    font-size: 14px; 
+    margin-top: 35px; 
+    opacity: 0.8; 
+    display: flex; 
+    flex-direction: column; 
+    gap: 15px; 
+    text-align: left; 
+    padding-left: 10px; 
+}
+
+.card-contacts i { 
+    margin-right: 12px; 
+    font-size: 18px; 
+    vertical-align: middle; 
+}
+
+/* --- Дизайн элементов --- */
+.btn-dark { 
+    background: #000; 
+    border: none; 
+    border-radius: 0; 
+    padding: 16px 40px; 
+    font-weight: 600; 
+    transition: 0.3s; 
+}
+
+.btn-dark:hover { 
+    background: #333; 
+    transform: translateY(-3px); 
+}
+
+.portfolio-img { 
+    width: 100%; 
+    height: 280px; 
+    object-fit: cover; 
+}
+
+.badge { 
+    border-radius: 2px; 
+    border: none; 
+    color: #444; 
+    padding: 4px 11px; 
+    font-size: 12.5px;
+    font-weight: 500; 
+    background: #f0f0f0; 
+    letter-spacing: 0.1px;
+}
+
+/* --- ВЕРТИКАЛЬНИЙ АКОРДЕОН (БІЛИЙ ДИЗАЙН) --- */
+.v-accordion {
+    width: 100%;
+    margin-top: 48px;
+}
+
+.v-acc-item {
+    border-top: 1.5px solid #ebebeb;
+}
+
+.v-acc-item:last-child {
+    border-bottom: 1.5px solid #ebebeb;
+}
+
+.v-acc-head {
+    display: flex;
+    align-items: center;
+    padding: 28px 0;
+    cursor: pointer;
+    gap: 20px;
+    user-select: none;
+    -webkit-user-select: none;
+}
+
+.v-acc-head:hover .v-acc-title {
+    opacity: 0.45;
+}
+
+.v-acc-num {
+    font-size: 11px;
+    font-weight: 600;
+    color: #c4c4c4;
+    letter-spacing: 2px;
+    min-width: 44px;
+    flex-shrink: 0;
+    font-variant-numeric: tabular-nums;
+    transition: color 0.3s ease;
+}
+
+.v-acc-item.is-open .v-acc-num {
+    color: #111;
+}
+
+.v-acc-title {
+    font-size: 18px;
+    font-weight: 800;
+    text-transform: uppercase;
+    color: #111;
+    letter-spacing: 0.4px;
+    flex: 1;
+    transition: opacity 0.25s ease;
+}
+
+.v-acc-time-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    font-size: 11px;
+    color: #b0b0b0;
+    border: 1px solid #e4e4e4;
+    padding: 6px 14px;
+    letter-spacing: 0.5px;
+    white-space: nowrap;
+    flex-shrink: 0;
+    font-weight: 500;
+    transition: border-color 0.35s ease, color 0.35s ease, background 0.35s ease;
+}
+
+.v-acc-item.is-open .v-acc-time-badge {
+    border-color: #111;
+    color: #111;
+    background: #f8f8f8;
+}
+
+.v-acc-toggle {
+    width: 34px;
+    height: 34px;
+    border: 1.5px solid #d0d0d0;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    transition: background 0.35s ease, transform 0.45s cubic-bezier(0.16, 1, 0.3, 1), color 0.35s ease, border-color 0.35s ease;
+    font-size: 13px;
+    color: #111;
+}
+
+.v-acc-item.is-open .v-acc-toggle {
+    background: #111;
+    color: #fff;
+    border-color: #111;
+    transform: rotate(45deg);
+}
+
+.v-acc-body {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.v-acc-body-inner {
+    padding: 0 80px 36px 62px;
+}
+
+.v-acc-desc {
+    font-size: 15px;
+    line-height: 1.8;
+    color: #666;
+    max-width: 620px;
+}
+
+@media (max-width: 768px) {
+    .v-acc-head { padding: 22px 0; gap: 14px; }
+    .v-acc-num { min-width: 36px; font-size: 10px; }
+    .v-acc-title { font-size: 14px; letter-spacing: 0.2px; }
+    .v-acc-time-badge { display: none; }
+    .v-acc-toggle { width: 30px; height: 30px; font-size: 12px; }
+    .v-acc-body-inner { padding: 0 0 28px 50px; }
+}
+
+@media (max-width: 480px) {
+    .v-acc-title { font-size: 12.5px; letter-spacing: 0; }
+    .v-acc-body-inner { padding: 0 0 24px 0; }
+    .v-acc-desc { font-size: 14px; }
+}
+
+/* Переглянутий пункт акордеону */
+.v-acc-item.was-viewed:not(.is-open) {
+    background: #f7f7f7;
+}
+.v-acc-item.was-viewed:not(.is-open) .v-acc-num {
+    color: #d8d8d8;
+}
+.v-acc-item.was-viewed:not(.is-open) .v-acc-title {
+    color: #888;
+}
+.v-acc-item.was-viewed:not(.is-open) .v-acc-time-badge {
+    color: #ccc;
+    border-color: #eee;
+}
+.v-acc-item.was-viewed:not(.is-open) .v-acc-toggle {
+    border-color: #ddd;
+    color: #bbb;
+}
+
+/* --- ОБНОВЛЕННАЯ СТИЛЬНАЯ ВРЕМЕННАЯ ШКАЛА (TIMELINE) --- */
+.process-section {
+    background: #000;
+    color: #fff;
+    position: relative;
+    overflow-x: hidden; /* усуває білу смугу на мобільних */
+}
+
+.timeline-container {
+    position: relative;
+    padding-left: 35px;
+    margin-left: 15px;
+    border-left: 2px dashed rgba(255, 255, 255, 0.15);
+}
+
+.timeline-item {
+    position: relative;
+    margin-bottom: 40px;
+}
+
+.timeline-item:last-child {
+    margin-bottom: 0;
+}
+
+.timeline-dot {
+    position: absolute;
+    left: -46px;
+    top: 6px;
+    width: 18px;
+    height: 18px;
+    background: transparent;
+    border: 2px solid rgba(255,255,255,0.4);
+    border-radius: 50%;
+    z-index: 2;
+    transition: background-color 0.5s ease, transform 0.3s ease, border-color 0.5s ease, box-shadow 0.5s ease;
+}
+
+.timeline-item.animated .timeline-dot {
+    background: #fff;
+    border-color: #fff;
+    box-shadow: 0 0 14px rgba(255,255,255,0.55);
+}
+
+
+
+.timeline-content {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    padding: 28px;
+    user-select: none;
+    -webkit-user-select: none;
+    cursor: default;
+}
+
+.timeline-time-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    background: transparent;
+    color: rgba(255,255,255,0.9);
+    border: 1px solid rgba(255,255,255,0.2);
+    padding: 6px 14px;
+    font-weight: 600;
+    margin-bottom: 16px;
+    position: relative;
+    overflow: hidden;
+}
+
+/* Прогрес-бар що заповнюється при появі */
+.timeline-time-badge::before {
+    content: '';
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    width: 0%;
+    background: rgba(255,255,255,0.1);
+    transition: width 1.6s cubic-bezier(0.16, 1, 0.3, 1) 0.2s;
+}
+
+.timeline-item.animated .timeline-time-badge::before {
+    width: var(--progress, 20%);
+}
+
+.timeline-time-badge i {
+    font-size: 11px;
+    opacity: 0.6;
+}
+
+.timeline-title {
+    font-size: 20px;
+    font-weight: 700;
+    margin-bottom: 12px;
+    letter-spacing: -0.3px;
+}
+
+.timeline-desc {
+    font-size: 14px;
+    color: rgba(255, 255, 255, 0.65);
+    line-height: 1.6;
+    margin: 0;
+}
+
+/* --- Модальное окно --- */
+.modal-content { 
+    border-radius: 0; 
+    border: none; 
+    padding: 20px; 
+    box-shadow: 0 10px 40px rgba(0,0,0,0.1); 
+}
+
+.form-control { 
+    border-radius: 0 !important; 
+    border: none !important;
+    outline: none !important;
+    padding: 12px; 
+    background: #f9f9f9; 
+    transition: box-shadow 0.15s ease-in-out;
+}
+
+.form-control:focus {
+    border: 1px solid #000 !important;
+    box-shadow: none !important;
+    background: #fff;
+    outline: none !important;
+}
+
+.form-check-input:checked { 
+    background-color: #000; 
+    border-color: #000; 
+}
+
+.form-check-input:focus {
+    border-color: #000 !important;
+    box-shadow: 0 0 0 0.2rem rgba(0, 0, 0, 0.15) !important;
+}
+
+.char-counter {
+    font-size: 12px;
+    color: #aaa;
+    text-align: right;
+    margin-top: 4px;
+    transition: color 0.2s ease;
+}
+.char-counter.warn  { color: #cc9900; }
+.char-counter.limit { color: #cc0000; }
+
+#submitForm {
+    padding: 10px 28px; 
+    font-size: 14px;
+    font-weight: 600;
+    border-radius: 0;
+    transition: 0.2s ease-in-out;
+}
+
+#submitForm:disabled {
+    background-color: #666;
+    cursor: not-allowed;
+    transform: none;
+}
+
+/* --- INTL-TEL-INPUT МОДИФИКАЦИИ --- */
+.iti { 
+    display: block !important; 
+    width: 100% !important;
+    margin-bottom: 1rem;
+}
+
+#userPhone {
+    padding-left: 52px !important;
+}
+
+.iti__country-list {
+    position: fixed !important;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+    background: #ffffff !important;
+    border: 1px solid #eee !important;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.15) !important;
+    z-index: 9999 !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    border-radius: 0 !important;
+}
+
+.iti__country {
+    padding: 10px 15px !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 12px !important;
+    background: #ffffff !important;
+}
+
+.iti__country:hover {
+    background: #f5f5f5 !important;
+}
+
+.iti__country-name {
+    font-size: 14px !important;
+    color: #000 !important;
+    font-weight: 400 !important;
+}
+
+.iti__dial-code {
+    font-size: 14px !important;
+    color: #666 !important;
+    margin-left: auto !important;
+}
+
+/* --- Блок мессенджеров --- */
+#messengerBlock { 
+    display: none; 
+    margin-top: 15px; 
+}
+
+.msg-btn { 
+    border: 1px solid #ccc; 
+    background: #fff; 
+    padding: 8px 15px; 
+    font-size: 14px; 
+    cursor: pointer; 
+    transition: 0.2s; 
+}
+
+.msg-btn.active { 
+    background: #000; 
+    color: #fff; 
+    border-color: #000; 
+}
+
+.contact-icon { 
+    font-size: 30px; 
+    color: #000; 
+    margin-right: 25px; 
+    transition: 0.3s; 
+    display: inline-block; 
+}
+
+.contact-icon:hover { 
+    color: #666; 
+    transform: scale(1.1); 
+}
+
+@keyframes fadeSlideUp {
+    from { opacity: 0; transform: translateY(24px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+.portfolio-item {
+    opacity: 0;
+    animation: fadeSlideUp 0.45s ease forwards;
+}
+
+.project-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.project-tag {
+    font-size: 11.5px;
+    padding: 3px 10px;
+    border: none;
+    color: #555;
+    background: #f0f0f0;
+    border-radius: 2px;
+    font-weight: 500;
+    letter-spacing: 0.1px;
+}
+
+.project-modal-footer {
+    padding: 20px 28px 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 20px;
+    flex-shrink: 0;
+}
+
+.project-nav-btn {
+    background: none;
+    border: none;
+    font-size: 22px;
+    cursor: pointer;
+    color: #000;
+    padding: 0;
+    line-height: 1;
+    transition: opacity 0.2s;
+    flex-shrink: 0;
+}
+
+.project-nav-btn:hover { opacity: 0.4; }
+
+/* Стрілка неактивна — прозора, некликабельна */
+.project-nav-btn.nav-hidden {
+    opacity: 0;
+    pointer-events: none;
+    cursor: default;
+}
+
+.portfolio-card { cursor: pointer; }
+
+/* Усунення 300ms затримки тапу на iOS/Android */
+button, a, [tabindex="0"],
+.v-acc-head, .navbar-toggler,
+.portfolio-card, .project-nav-btn,
+.msg-btn, .contact-icon, .card-contact-link {
+    touch-action: manipulation;
+}
+
+/* Мінімальна висота touch-target для іконок контактів */
+.contact-icon {
+    min-height: 44px;
+    min-width: 44px;
+    display: inline-flex !important;
+    align-items: center;
+    justify-content: center;
+}
+
+/* --- Project Modal — однаковий розмір для всіх карточок --- */
+#projectModal .modal-content {
+    overflow: hidden;
+}
+
+/* Фіксована висота — однакова для всіх */
+#projectModal .row.g-0 {
+    height: 480px;
+    min-height: 480px;
+    max-height: 480px;
+}
+
+#projectModal .col-lg-6:first-child {
+    overflow: hidden;
+    height: 100%;
+    flex-shrink: 0;
+}
+
+#pmImg {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center top;
+    display: block;
+}
+
+#projectModal .col-lg-6.d-flex {
+    overflow: hidden;
+    height: 100%;
+    min-height: 0;
+}
+
+/* Текст сколиться всередині, футер завжди видно */
+#projectModal .col-lg-6.d-flex > div:first-child {
+    flex: 1 1 0;
+    min-height: 0;
+    overflow-y: auto;
+}
+
+.project-modal-footer {
+    flex-shrink: 0;
+}
+
+/* Планшет і нижче — фіксована карточка однакового розміру */
+@media (max-width: 991px) {
+    #projectModal .modal-dialog {
+        max-width: 88vw;
+        margin: auto;
+    }
+    #projectModal .modal-content {
+        overflow: hidden;
+    }
+    #projectModal .row.g-0 {
+        height: 520px;
+        min-height: 520px;
+        max-height: 520px;
+        flex-direction: column;
+    }
+    #projectModal .col-lg-6 {
+        width: 100% !important;
+        max-width: 100% !important;
+    }
+    /* Зображення — фіксована частина */
+    #projectModal .col-lg-6:first-child {
+        height: 210px !important;
+        min-height: 210px !important;
+        max-height: 210px !important;
+        flex: 0 0 210px !important;
+        overflow: hidden;
+    }
+    #pmImg {
+        height: 210px;
+        width: 100%;
+        object-fit: cover;
+        display: block;
+    }
+    /* Текстова частина займає решту */
+    #projectModal .col-lg-6.d-flex {
+        flex: 1 1 0 !important;
+        min-height: 0 !important;
+        overflow: hidden;
+        height: auto !important;
+        display: flex !important;
+        flex-direction: column !important;
+    }
+    #projectModal .col-lg-6.d-flex > div:first-child {
+        flex: 1 1 0;
+        min-height: 0;
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+        padding: 18px 18px 8px !important;
+    }
+    #projectModal .col-lg-6.d-flex h3 {
+        font-size: 18px;
+        margin-bottom: 8px !important;
+    }
+    #projectModal .col-lg-6.d-flex p {
+        font-size: 13px;
+        line-height: 1.5;
+        margin-bottom: 10px !important;
+    }
+    #pmTags { margin-bottom: 12px !important; }
+    .project-modal-footer {
+        flex-shrink: 0;
+        padding: 12px 18px 16px;
+    }
+}
+
+@media (max-width: 575px) {
+    #projectModal .modal-dialog {
+        max-width: 94vw;
+    }
+    #projectModal .row.g-0 {
+        height: 500px;
+        min-height: 500px;
+        max-height: 500px;
+    }
+    #projectModal .col-lg-6:first-child {
+        height: 190px !important;
+        min-height: 190px !important;
+        max-height: 190px !important;
+        flex: 0 0 190px !important;
+    }
+    #pmImg {
+        height: 190px;
+    }
+}
+
+/* --- Toast уведомления --- */
+#toastContainer {
+    position: fixed;
+    bottom: 28px;
+    right: 28px;
+    z-index: 999999;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.toast-item {
+    background: #000;
+    color: #fff;
+    padding: 16px 24px;
+    font-size: 14px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+    animation: toastIn 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    transition: opacity 0.3s, transform 0.3s;
+}
+
+@keyframes toastIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+/* --- About photo placeholder --- */
+.about-photo-wrap {
+    width: 100%;
+    max-width: 340px;
+}
+
+.about-photo-placeholder {
+    width: 100%;
+    aspect-ratio: 3/4;
+    background: #e8e8e8;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    border: 2px dashed #ccc;
+    position: relative;
+    overflow: hidden;
+}
+
+.about-photo-placeholder svg {
+    opacity: 0.5;
+}
+
+.about-photo-label {
+    font-size: 13px;
+    font-weight: 600;
+    color: #aaa;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+}
+
+/* Fix hero button alignment */
+.hero .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Кнопка "Мої роботи" — стиль в тон з чорною */
+.hero .btn-outline-dark,
+.btn-outline-dark {
+    border-radius: 0 !important;
+    border: 2px solid #000 !important;
+    color: #000 !important;
+    font-weight: 600;
+    padding: 16px 40px;
+    transition: 0.3s;
+    background: transparent;
+}
+.hero .btn-outline-dark:hover,
+.btn-outline-dark:hover {
+    background: #000 !important;
+    color: #fff !important;
+    transform: translateY(-3px);
+}
+
+/* --- Мобільні виправлення кнопок --- */
+@media (max-width: 575px) {
+    .hero .d-flex.gap-3 {
+        flex-direction: column !important;
+        gap: 12px !important;
+    }
+    .hero .btn-dark,
+    .hero .btn-outline-dark {
+        width: 100% !important;
+        text-align: center !important;
+        padding: 14px 20px !important;
+    }
+
+    .about-photo-wrap {
+        max-width: 240px;
+    }
+
+    /* Modal на мобільних */
+    .modal-content {
+        padding: 16px !important;
+    }
+
+    .modal-dialog {
+        margin: 8px !important;
+    }
+
+    /* Кнопки месенджерів */
+    .d-flex.gap-2 .msg-btn {
+        flex: 1;
+        text-align: center;
+    }
+}
+
+/* Fix intl-tel-input on mobile */
+@media (max-width: 575px) {
+    .iti__country-list {
+        max-height: 180px !important;
+    }
+}
+
+
+/* Фікс Bootstrap modal: сторінка не зсувається при відкритті */
+body.modal-open {
+    padding-right: 0 !important;
+    overflow-y: hidden !important;
+}
+.modal-open .navbar,
+.modal-open .fixed-top {
+    padding-right: 0 !important;
+}
+
+.reveal {
+    opacity: 0;
+    transform: translateY(32px);
+    transition: opacity 0.65s ease, transform 0.65s ease;
+}
+
+.reveal.visible {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.nav-link.active-section {
+    opacity: 1 !important;
+    font-weight: 700 !important;
+    border-bottom: 2px solid #000;
+    padding-bottom: 2px;
+}
+
+@media (min-width: 992px) {
+    .nav-overlay { display: none !important; }
+    .navbar-collapse {
+        position: static !important;
+        flex: 1 !important;
+        width: auto !important;
+        max-width: none !important;
+        height: auto !important;
+        background: transparent !important;
+        flex-direction: row !important;
+        transform: none !important;
+        transition: none !important;
+        padding: 0 !important;
+        box-shadow: none !important;
+        justify-content: flex-end !important;
+    }
+    .navbar-collapse .navbar-nav {
+        flex-direction: row !important;
+        align-items: center !important;
+        gap: 0 !important;
+    }
+    .navbar-collapse .nav-link {
+        font-size: 15px !important;
+        font-weight: 500 !important;
+        color: #000 !important;
+        margin: 0 10px !important;
+        opacity: 1 !important;
+        transform: none !important;
+        padding: 4px 0 !important;
+    }
+}
+/* =====================================================
+   АДАПТИВНІСТЬ — МОБІЛЬНІ ТА ПЛАНШЕТИ
+   ===================================================== */
+
+/* Планшет (768px і нижче) */
+@media (max-width: 768px) {
+    .section-padding { padding: 60px 0; }
+
+    /* Hero */
+    .hero {
+        padding: 100px 0 50px 0;
+        text-align: center;
+    }
+    .hero h1 { font-size: 2.2rem !important; }
+    .hero .lead { font-size: 1rem; }
+    .hero .btn-dark { display: inline-block !important; }
+    #linesCanvas { width: 100%; opacity: 0.08; }
+
+    /* Візитка */
+    .card-scene { margin-top: 40px; }
+    .business-card { min-height: 380px; padding: 30px 24px; }
+
+    /* Контакти */
+    .contact-icon { font-size: 26px; margin-right: 18px; }
+}
+
+/* Мобільний (480px і нижче) */
+@media (max-width: 480px) {
+    .section-padding { padding: 50px 0; }
+    .hero { padding: 90px 0 40px 0; }
+    .hero h1 { font-size: 1.75rem !important; }
+    .hero .btn-dark {
+        display: block !important;
+        width: 100%;
+        text-align: center;
+        padding: 14px 20px;
+    }
+
+    .timeline-container {
+        margin-left: 0;
+        padding-left: 26px;
+    }
+    /* Вирівнюємо точку з лінією при зменшеному padding */
+    .timeline-dot { left: -35px; }
+    .timeline-content { padding: 20px 16px; }
+    .timeline-time-badge { font-size: 10px; letter-spacing: 0.8px; padding: 5px 10px; }
+
+    .portfolio-img { height: 200px; }
+
+    #submitForm { width: 100%; }
+    .modal-footer { padding-left: 16px; padding-right: 16px; }
+
+    .business-card { min-height: 340px; padding: 28px 20px; }
+    .card-name { font-size: 20px; }
+    .card-avatar { width: 90px; height: 90px; }
+
+    /* Toast на повну ширину */
+    #toastContainer {
+        bottom: 16px;
+        right: 16px;
+        left: 16px;
+    }
+    .toast-msg { min-width: unset; max-width: 100%; }
+
+    /* Акордеон */
+    .v-acc-title { font-size: 12.5px; }
+}
+
+/* =====================================================
+   LANDSCAPE MOBILE — горизонтальна орієнтація
+   ===================================================== */
+@media (max-height: 500px) and (orientation: landscape) {
+    .hero {
+        min-height: auto !important;
+        padding: 95px 0 36px 0;
+    }
+    .section-padding { padding: 40px 0; }
+}
+
+/* =====================================================
+   ДУЖЕ МАЛІ ЕКРАНИ < 380px (iPhone SE, Galaxy A01…)
+   ===================================================== */
+@media (max-width: 380px) {
+    .section-padding { padding: 40px 0; }
+    .hero { padding: 85px 0 32px 0; }
+    .hero h1 { font-size: 1.5rem !important; }
+    .hero .lead { font-size: 0.875rem; }
+
+    /* Navbar бренд — щоб вмістилось на 320px */
+    .navbar-brand { font-size: 1.1rem !important; }
+
+    /* Timeline — найменший варіант */
+    .timeline-container { margin-left: 0; padding-left: 20px; }
+    .timeline-dot {
+        left: -29px;
+        width: 14px;
+        height: 14px;
+        top: 8px;
+    }
+    .timeline-content { padding: 14px 12px; }
+    .timeline-title { font-size: 16px; }
+    .timeline-desc { font-size: 13px; }
+    .timeline-time-badge { font-size: 9px; padding: 4px 8px; letter-spacing: 0.5px; }
+
+    /* Акордеон */
+    .v-acc-head { gap: 10px; padding: 16px 0; }
+    .v-acc-title { font-size: 11px !important; }
+    .v-acc-toggle { width: 26px; height: 26px; font-size: 11px; }
+
+    /* Business card */
+    .business-card { padding: 24px 14px; min-height: 300px; }
+    .card-avatar { width: 80px; height: 80px; }
+    .card-name { font-size: 18px; }
+    .card-contacts { font-size: 12px; gap: 10px; margin-top: 20px; }
+    .card-contacts i { font-size: 14px; margin-right: 8px; }
+
+    /* Portfolio */
+    .portfolio-img { height: 180px; }
+
+    /* Buttons */
+    .btn-dark, .btn-outline-dark {
+        padding: 12px 20px !important;
+        font-size: 14px;
+    }
+}
+
+    
+/* --- СОЦІАЛЬНІ ІКОНКИ НА КАРТЦІ --- */
+.card-socials {
+    display: flex;
+    gap: 24px;
+    margin-top: 28px;
+    justify-content: center;
+}
+
+.card-social-link {
+    color: rgba(255,255,255,0.75);
+    font-size: 22px;
+    text-decoration: none;
+    transition: color 0.2s ease, transform 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 44px;
+    min-height: 44px;
+}
+
+.card-social-link:hover {
+    color: #fff;
+    transform: translateY(-3px);
+}
