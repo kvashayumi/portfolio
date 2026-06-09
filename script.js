@@ -1,7 +1,7 @@
 document.addEventListener("DOMContentLoaded", () => {
     
     // =====================================================
-    // ДАННЫЕ ПОРТФОЛИО
+    // ДАНІ ПОРТФОЛІо
     // =====================================================
     const portfolioData = [
         {
@@ -67,7 +67,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const loadMoreBtn = document.getElementById('loadMoreBtn');
 
     // =====================================================
-    // ЛОКАЛИЗАЦИЯ И ПЕРЕКЛЮЧЕНИЕ ЯЗЫКОВ
+    // ЛОКАЛІЗАЦІЯ ТА ПЕРЕМИКАННЯ МОВ
     // =====================================================
     const langBtn = document.getElementById('langBtn');
     let lang = localStorage.getItem('lang') || 'uk'; // читаємо збережену мову або UK за замовчуванням
@@ -92,7 +92,7 @@ document.addEventListener("DOMContentLoaded", () => {
         langBtn.textContent = lng === 'uk' ? 'EN' : 'UA';
         localStorage.setItem('lang', lng);
         
-        // Перерендер карточек портфолио под язык
+        // Перендер портфоліо під мову
         if (portfolioGrid) {
             const currentCount = isExpanded ? portfolioData.length : itemsPerPage;
             portfolioGrid.innerHTML = '';
@@ -116,7 +116,7 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
     // =====================================================
-    // ГЕНЕРАЦИЯ КАРТОЧЕК ПОРТФОЛИО
+    // Генерація карток
     // =====================================================
     const buildCard = (item, index, delayIndex, animate) => {
         const title = lang === 'uk' ? item.titleUk : item.titleEn;
@@ -158,7 +158,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     // =====================================================
-    // МОДАЛКА ПРОЕКТОВ (НАВИГАЦИЯ)
+    // Навігація
     // =====================================================
     window._currentProjectIndex = 0;
     window.openProjectModal = function(dataIndex) {
@@ -192,7 +192,7 @@ document.addEventListener("DOMContentLoaded", () => {
     };
 
     // =====================================================
-    // АНИМАЦИЯ ФОНОВЫХ ЛИНИЙ НА ХЕРО
+    // Анімація ліній в херо
     // =====================================================
     const canvas = document.getElementById('linesCanvas');
     if (canvas) {
@@ -234,7 +234,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     // =====================================================
-    // ЖИВАЯ 3D ВИЗИТКА
+    // 3Д візитка
     // =====================================================
     const card = document.getElementById('businessCard');
     if (card) {
@@ -261,7 +261,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     // =====================================================
-    // SCROLL REVEAL (ПОЯВЛЕНИЕ СЕКЦИЙ)
+    // ПЛАВНА ПОЯВА ПРИ ПРОКРУЧУВАННІ
     // =====================================================
     const reveals = document.querySelectorAll('.reveal');
     const checkReveal = () => {
@@ -274,7 +274,7 @@ document.addEventListener("DOMContentLoaded", () => {
     checkReveal();
 
     // =====================================================
-    // ПОДСВЕТКА АКТИВНОГО ПУНКТА МЕНЮ ПРИ СКРОЛЛЕ
+    // Підсвічування активног пункта меню
     // =====================================================
     const sections = document.querySelectorAll('section[id]');
     const navLinks = document.querySelectorAll('.navbar-nav .nav-link');
@@ -295,7 +295,7 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
     // =====================================================
-    // MOBILE DRAWER УПРАВЛЕНИЕ
+    // МОБІЛЬНЕ МЕНЮ — УПРАВЛІННЯ
     // =====================================================
     const navbarNav = document.getElementById('navbarNav');
     const navOverlay = document.getElementById('navOverlay');
@@ -325,7 +325,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     // =====================================================
-    // ЛОГИКА ФОРМЫ СВЯЗИ И ВАЛИДАЦИИ
+    // ЛОГІКА ФОРМИ ЗВ'ЯЗКУ ТА ВАЛІДАЦІЇ
     // =====================================================
     const mCheck = document.getElementById('messengerCheck');
     const mBlock = document.getElementById('messengerBlock');
@@ -374,7 +374,7 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
-    // Инициализация intl-tel-input
+    // Ініціалізація intl-tel-input
     const phoneInput = document.getElementById('userPhone');
     let iti;
     if (phoneInput) {
@@ -425,7 +425,7 @@ document.addEventListener("DOMContentLoaded", () => {
             if (document.querySelector('.iti__country-list')) positionCountryList();
         });
 
-        // Форматирование номера телефона в реальном времени
+        // Форматування номера телефону в реальному часі
         phoneInput.addEventListener('input', (e) => {
             const dialCode = iti.getSelectedCountryData().dialCode;
             let val = phoneInput.value.replace(/\D/g, '');
@@ -452,7 +452,7 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
-    // Очистка формы при закрытии модалки
+    // Очищення форми при закритті модалки
     document.getElementById('contactModal')?.addEventListener('hidden.bs.modal', () => {
         document.getElementById('contactForm').reset();
         if (mBlock) mBlock.style.display = 'none';
@@ -466,7 +466,7 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     });
 
-    // Навигация по полям стрелками
+    // Навігація по полях стрілками
     const formFields = ['userName', 'userPhone', 'userMessage', 'messengerNick'];
     document.getElementById('contactModal')?.addEventListener('keydown', (e) => {
         const active = document.activeElement;
@@ -523,7 +523,7 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     };
 
-    // Отправка формы AJAX
+    // Відправка форми AJAX
     document.getElementById('contactForm')?.addEventListener('submit', async function(e) {
         e.preventDefault();
         document.getElementById('validationBanner').style.display = 'none';
@@ -569,7 +569,7 @@ document.addEventListener("DOMContentLoaded", () => {
             return;
         }
 
-        // messengerNick is optional — only Telegram may have it
+        // messengerNick необов'язковий — лише Telegram може його мати
 
         const originalBtnText = submitBtn.innerText;
         submitBtn.innerText = lang === 'uk' ? "Відправляється..." : "Sending...";
@@ -603,8 +603,8 @@ document.addEventListener("DOMContentLoaded", () => {
                     ? "Заявку відправлено! Зв'яжуся з вами найближчим часом."
                     : "Request sent! I'll get back to you shortly.";
 
-                // setTimeout is more reliable than hidden.bs.modal:
-                // avoids conflict between contactForm.reset() and iti state during 300ms animation
+                // setTimeout надійніший, ніж hidden.bs.modal:
+                // уникає конфлікту між contactForm.reset() та станом iti під час 300мс анімації
                 modalInstance.hide();
                 setTimeout(() => showToast(successMsg, 'success'), 400);
             } else {
@@ -632,7 +632,7 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     });
 
-    // Установка стартового языка интерфейса
+    // Встановлення початкової мови інтерфейсу
     updateLanguage(lang);
 
     // =====================================================
@@ -656,7 +656,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     // =====================================================
-    // FIX: Bootstrap modal не зсуває сторінку
+    // ВИПРАВЛЕННЯ: Bootstrap modal не зсуває сторінку
     // =====================================================
     document.querySelectorAll('.modal').forEach(m => {
         m.addEventListener('show.bs.modal', () => {
@@ -681,7 +681,7 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
     // =====================================================
-    // VERTICAL ACCORDION — CLICK TOGGLE
+    // ВЕРТИКАЛЬНИЙ АКОРДЕОН — ПЕРЕМИКАННЯ ПО КЛІКУ
     // =====================================================
     const accItems = document.querySelectorAll('.v-acc-item');
 
@@ -693,13 +693,13 @@ document.addEventListener("DOMContentLoaded", () => {
         head.addEventListener('click', () => {
             const isOpen = item.classList.contains('is-open');
 
-            // Close all
+            // Закрити всі
             accItems.forEach(i => {
                 i.classList.remove('is-open');
                 i.querySelector('.v-acc-body').style.maxHeight = '0';
             });
 
-            // Open clicked one if it was closed
+            // Відкрити натиснутий, якщо він був закритий
             if (!isOpen) {
                 item.classList.add('is-open');
                 item.classList.add('was-viewed');
@@ -709,4 +709,3 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
 });
-    
