@@ -1,8 +1,4 @@
-# Секретні дані — ніколи не завантажувати на GitHub
-.env
-
-# Логи сервера
-logs/
-
-# Залежності Node.js — їх не треба зберігати, встановлюються через npm install
 node_modules/
+.env
+submissions.json
+logs/
