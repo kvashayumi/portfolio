@@ -203,3 +203,5 @@ app.use((req, res) => {
 app.listen(PORT, () => {
     logger.info(`[START] Сервер успішно запущено на порту ${PORT}`);
 });
+
+// Перевірка оновлення коду
