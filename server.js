@@ -1,5 +1,8 @@
 require('dotenv').config(); // Завантажує змінні з файлу .env — має бути ПЕРШИМ рядком
 
+const dns = require('dns');
+dns.setDefaultResultOrder('ipv4first');
+
 const express    = require('express');
 const fs         = require('fs');
 const nodemailer = require('nodemailer');
