@@ -58,10 +58,15 @@ const submitLimiter = rateLimit({
     }
 });
 
-// FIX: Транспортер створюється один раз, а не при кожному запиті
-// (nodemailer рекомендує повторно використовувати об'єкт transporter)
+// FIX: Транспортер створюється один раз із жорсткою прив'язкою до IPv4 для Railway
 const mailer = nodemailer.createTransport({
-    service: 'gmail',
+    host: 'smtp.gmail.com',
+    port: 465,
+    secure: true, // Використовуємо захищене SSL з'єднання
+    lookup: (hostname, options, callback) => {
+        options.family = 4; // ПРИМУСОВИЙ IPv4
+        dns.lookup(hostname, options, callback);
+    },
     auth: {
         user: process.env.MAIL_USER,
         pass: process.env.MAIL_PASS
