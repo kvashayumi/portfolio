@@ -13,11 +13,11 @@ const rateLimit  = require('express-rate-limit');
 require('winston-daily-rotate-file');
 
 const app  = express();
-const PORT = process.env.PORT || 3000; // FIX: не хардкодимо порт
+const PORT = process.env.PORT || 8080;
 
 app.set('trust proxy', 1);
 
-// FIX: обмежуємо CORS для продакшену через .env (CORS_ORIGIN=https://yourdomain.com)
+// Обмежуємо CORS для продакшену через .env (CORS_ORIGIN=https://yourdomain.com)
 // Для локальної розробки — відкрито для всіх
 app.use(cors({
     origin: process.env.CORS_ORIGIN || '*'
@@ -26,7 +26,7 @@ app.use(cors({
 app.use(express.json());
 app.use(express.static(path.join(__dirname))); // Роздає index.html та інші файли
 
-// --- НАЛАШТУВАННЯ АВТОМАТИЧНОГО КОНТРОЛЮ ПАМ'ЯТІ ---
+// --- НАЛАШТУВАННЯ АВТОМАТИЧНОГО КОНТРОЛЮ ПАМ'ЯТІ (ЛОГИ) ---
 const transport = new winston.transports.DailyRotateFile({
     dirname: path.join(__dirname, 'logs'),
     filename: 'server-%DATE%.log',
@@ -45,24 +45,22 @@ const logger = winston.createLogger({
 
 // --- ЗАХИСТ ВІД СПАМУ (Rate Limiting) ---
 const submitLimiter = rateLimit({
-    windowMs: 10 * 60 * 1000,
-    max: 3,
+    windowMs: 10 * 60 * 1000, // 10 хвилин
+    max: 3,                   // Максимум 3 заявки з одного IP
     standardHeaders: true,
     legacyHeaders: false,
-    keyGenerator: (req) => {
-        return req.ip || req.headers['x-forwarded-for'] || 'local-user';
-    },
     handler: (req, res) => {
         logger.warn(`[RATE LIMIT] Перевищено ліміт запитів з IP: ${req.ip}`);
         res.status(429).json({ error: 'Забагато спроб. Спробуйте через 10 хвилин.' });
     }
 });
 
-// FIX: Транспортер створюється один раз із жорсткою прив'язкою до IPv4 для Railway
+// --- ОНОВЛЕНИЙ БЛОК ТРАНСПОРТЕРА (ПОРТ 587) ---
 const mailer = nodemailer.createTransport({
     host: 'smtp.gmail.com',
-    port: 465,
-    secure: true, // Використовуємо захищене SSL з'єднання
+    port: 587,             // Використовуємо порт 587 для обходу блокування Railway
+    secure: false,         // Для порту 587 має бути false
+    requireTLS: true,      // Примусово вимагаємо шифрування
     lookup: (hostname, options, callback) => {
         options.family = 4; // ПРИМУСОВИЙ IPv4
         dns.lookup(hostname, options, callback);
