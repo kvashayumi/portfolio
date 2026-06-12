@@ -1,4 +1,15 @@
+# Залежності
 node_modules/
+
+# Секрети — НІКОЛИ не комітимо
 .env
+_env
+
+# База даних і логи
+*.db
+submissions.db
 submissions.json
 logs/
+
+# Завантажені користувачем зображення
+uploads/

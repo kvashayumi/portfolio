@@ -7,6 +7,9 @@ const path       = require('path');
 const winston    = require('winston');
 const rateLimit  = require('express-rate-limit');
 const Database   = require('better-sqlite3');
+const multer     = require('multer');
+const fs         = require('fs');
+const crypto     = require('crypto');
 require('winston-daily-rotate-file');
 
 const app  = express();
@@ -20,6 +23,23 @@ app.use(cors({
 
 app.use(express.json());
 app.use(express.static(path.join(__dirname)));
+
+// --- НАЛАШТУВАННЯ ЗАВАНТАЖЕННЯ ЗОБРАЖЕНЬ ---
+// Папка uploads/ роздається автоматично через express.static вище,
+// тож файл, збережений тут, одразу доступний за адресою /uploads/<ім'я>
+const uploadDir = path.join(__dirname, 'uploads');
+if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir);
+
+const storage = multer.diskStorage({
+    destination: uploadDir,
+    filename: (req, file, cb) => cb(null, Date.now() + path.extname(file.originalname))
+});
+
+const upload = multer({
+    storage,
+    limits: { fileSize: 5 * 1024 * 1024 }, // максимум 5 МБ на файл
+    fileFilter: (req, file, cb) => cb(null, file.mimetype.startsWith('image/'))
+});
 
 // --- НАЛАШТУВАННЯ ЛОГІВ ---
 const transport = new winston.transports.DailyRotateFile({
@@ -216,6 +236,53 @@ app.post('/submit', submitLimiter, async (req, res) => {
 
 // --- СЕКЦІЯ АДМІН-ПАНЕЛІ (REST API + UI) ---
 
+// Порівняння рядків, стійке до timing-атак.
+// Хешуємо обидва значення до фіксованої довжини (32 байти),
+// щоб crypto.timingSafeEqual ніколи не падав і не "зливав" довжину пароля.
+function safeEqual(a, b) {
+    const ha = crypto.createHash('sha256').update(String(a)).digest();
+    const hb = crypto.createHash('sha256').update(String(b)).digest();
+    return crypto.timingSafeEqual(ha, hb);
+}
+
+// HTTP Basic Auth для всієї адмінки.
+// Браузер один раз запитає логін/пароль на /admin і далі сам підставлятиме
+// їх до всіх запитів /admin/api/... — тож фронтенд міняти не потрібно.
+function adminAuth(req, res, next) {
+    const expectedUser = process.env.ADMIN_USER;
+    const expectedPass = process.env.ADMIN_PASSWORD;
+
+    // Fail-closed: якщо креденшіали не задані в .env — не пускаємо нікого.
+    if (!expectedUser || !expectedPass) {
+        logger.error('[AUTH] ADMIN_USER або ADMIN_PASSWORD не задані в оточенні — доступ до адмінки заблоковано.');
+        return res
+            .status(500)
+            .send('Адмін-панель не налаштована: задайте ADMIN_USER і ADMIN_PASSWORD у файлі .env');
+    }
+
+    const header = req.headers.authorization || '';
+    const [scheme, encoded] = header.split(' ');
+
+    if (scheme === 'Basic' && encoded) {
+        const decoded = Buffer.from(encoded, 'base64').toString('utf8');
+        const sep  = decoded.indexOf(':');
+        const user = decoded.slice(0, sep);
+        const pass = decoded.slice(sep + 1);
+
+        if (safeEqual(user, expectedUser) && safeEqual(pass, expectedPass)) {
+            return next();
+        }
+    }
+
+    res.set('WWW-Authenticate', 'Basic realm="Admin Panel", charset="UTF-8"');
+    return res.status(401).send('Потрібна авторизація для доступу до адмін-панелі.');
+}
+
+// Захищаємо ОДНИМ рядком усі маршрути, що починаються з /admin
+// (і сторінку UI, і весь REST API під /admin/api/...).
+// Важливо: реєструється ДО самих маршрутів адмінки нижче.
+app.use('/admin', adminAuth);
+
 // Отримання списку заявок для адмінки
 app.get('/admin/api/submissions', (req, res) => {
     try {
@@ -255,10 +322,53 @@ app.post('/admin/api/projects', (req, res) => {
     }
 });
 
+// Оновлення існуючого проекту
+app.put('/admin/api/projects/:id', (req, res) => {
+    try {
+        const { img, titleUk, titleEn, descUk, descEn, tags, link } = req.body;
+        if (!titleUk || !titleEn) return res.status(400).json({ error: "Назва проекту обов'язкова" });
+
+        const existing = db.prepare("SELECT img FROM projects WHERE id = ?").get(req.params.id);
+        if (!existing) return res.status(404).json({ error: "Проект не знайдено" });
+
+        // Якщо нове зображення не передано — зберігаємо старе
+        const newImg = (img && img.trim()) ? img : existing.img;
+
+        db.prepare(`
+            UPDATE projects SET img=?, titleUk=?, titleEn=?, descUk=?, descEn=?, tags=?, link=?
+            WHERE id=?
+        `).run(newImg, titleUk, titleEn, descUk, descEn, tags, link || "#", req.params.id);
+
+        logger.info(`[DB] Проект #${req.params.id} оновлено.`);
+        res.json({ success: true });
+    } catch (err) {
+        logger.error(`[API ERROR] Помилка оновлення проекту: ${err.message}`);
+        res.status(500).json({ error: "Помилка оновлення проекту" });
+    }
+});
+
+// Завантаження зображення для проекту
+app.post('/admin/api/upload', upload.single('image'), (req, res) => {
+    if (!req.file) return res.status(400).json({ error: "Файл не отримано або має невірний формат" });
+    res.json({ url: '/uploads/' + req.file.filename });
+});
+
 // Видалення проекту
 app.delete('/admin/api/projects/:id', (req, res) => {
     try {
+        // Спершу дізнаємось, яке зображення прив'язане до проекту
+        const row = db.prepare("SELECT img FROM projects WHERE id = ?").get(req.params.id);
         db.prepare("DELETE FROM projects WHERE id = ?").run(req.params.id);
+
+        // Якщо це локально завантажений файл — прибираємо його з диску, щоб не накопичувалось сміття
+        if (row && row.img && row.img.startsWith('/uploads/')) {
+            const filePath = path.join(uploadDir, path.basename(row.img));
+            fs.unlink(filePath, (err) => {
+                if (err && err.code !== 'ENOENT') {
+                    logger.error(`[DELETE FILE ERROR] Не вдалося видалити файл ${filePath}: ${err.message}`);
+                }
+            });
+        }
         res.json({ success: true });
     } catch (err) {
         res.status(500).json({ error: "Помилка видалення проекту" });
@@ -273,48 +383,102 @@ app.get('/admin', (req, res) => {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Панель керування портфоліо</title>
+    <title>Панель керування — Dmytro Kvasha</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
     <style>
-        * { box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
-        body { background-color: #f4f6f8; color: #111; margin: 0; padding: 40px 20px; }
-        .container { max-width: 1100px; margin: 0 auto; background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.05); }
-        h1 { margin-top: 0; font-size: 24px; font-weight: 700; color: #111; display: flex; align-items: center; justify-content: space-between; }
-        
-        /* Вкладки (Tabs) */
-        .tabs { display: flex; gap: 10px; margin-bottom: 25px; border-bottom: 2px solid #eaeaea; padding-bottom: 10px; }
-        .tab-btn { background: none; border: none; font-size: 16px; font-weight: 600; color: #666; padding: 8px 16px; cursor: pointer; transition: 0.2s; border-radius: 6px; }
-        .tab-btn.active { color: #0070f3; background: #e6f0ff; }
+        * { box-sizing: border-box; }
+        :root { --accent: #000; --muted: #666; --border: #ebebeb; }
+        body {
+            font-family: 'Inter', sans-serif;
+            color: #000;
+            background: #fff;
+            margin: 0;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        /* Верхня панель — у стилі навбару сайту */
+        .admin-nav {
+            height: 80px;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            padding: 0 28px;
+            border-bottom: 1px solid var(--border);
+            position: sticky;
+            top: 0;
+            background: #fff;
+            z-index: 50;
+        }
+        .admin-nav .brand { font-weight: 800; font-size: 1.25rem; letter-spacing: -0.02em; }
+        .admin-nav .tag { font-size: 11px; font-weight: 600; letter-spacing: 0.5px; background: #000; color: #fff; padding: 4px 10px; border-radius: 2px; text-transform: uppercase; }
+        .admin-nav .view-site {
+            margin-left: auto;
+            font-size: 14px; font-weight: 600;
+            color: #000; text-decoration: none;
+            border: 2px solid #000; padding: 9px 20px;
+            transition: 0.3s;
+        }
+        .admin-nav .view-site:hover { background: #000; color: #fff; transform: translateY(-2px); }
+
+        .container { max-width: 1100px; margin: 44px auto; padding: 0 28px; }
+        h2.page-title { margin: 0 0 6px; font-size: 26px; font-weight: 800; letter-spacing: -0.02em; }
+        .page-sub { margin: 0; color: var(--muted); font-size: 14px; }
+
+        /* Вкладки */
+        .tabs { display: flex; gap: 4px; margin: 30px 0 28px; border-bottom: 1px solid var(--border); }
+        .tab-btn { background: none; border: none; font-family: inherit; font-size: 15px; font-weight: 600; color: #999; padding: 12px 18px; cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -1px; transition: color 0.2s, border-color 0.2s; }
+        .tab-btn:hover { color: #000; }
+        .tab-btn.active { color: #000; border-bottom-color: #000; }
         .tab-content { display: none; }
         .tab-content.active { display: block; }
 
-        /* Стилі таблиць */
-        table { width: 100%; border-collapse: collapse; text-align: left; font-size: 14px; margin-top: 10px; }
-        th { background-color: #fafafa; padding: 12px; font-weight: 600; color: #444; border-bottom: 2px solid #eaeaea; }
-        td { padding: 12px; border-bottom: 1px solid #eaeaea; vertical-align: middle; }
-        tr:hover { background-color: #f9fbfd; }
-        
-        .badge { display: inline-block; padding: 4px 8px; border-radius: 20px; font-size: 11px; font-weight: bold; background: #eaeaea; text-transform: uppercase; }
-        .badge.tg { background: #e1f3ff; color: #0088cc; }
-        .badge.viber { background: #f3e9fa; color: #7340d3; }
-        .badge.call { background: #e6f9ed; color: #107c41; }
-        
-        .phone-link { color: #0070f3; text-decoration: none; font-weight: 500; }
-        .phone-link:hover { text-decoration: underline; }
-        .delete-btn { background: #ffebeb; color: #ff3333; border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-weight: 600; transition: 0.2s; }
-        .delete-btn:hover { background: #ff3333; color: white; }
+        h3 { font-size: 16px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.4px; margin: 0 0 16px; }
+        #tab-portfolio h3 + h3, #tab-portfolio table + h3 { margin-top: 36px; }
+
+        /* Таблиці */
+        table { width: 100%; border-collapse: collapse; text-align: left; font-size: 14px; }
+        th { background: #fafafa; padding: 13px 12px; font-weight: 600; color: #111; border-bottom: 1px solid var(--border); text-transform: uppercase; font-size: 11px; letter-spacing: 0.8px; }
+        td { padding: 14px 12px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+        tr:hover { background: #fafafa; }
+
+        .badge { display: inline-block; border-radius: 2px; border: none; color: #444; padding: 4px 11px; font-size: 12.5px; font-weight: 500; background: #f0f0f0; letter-spacing: 0.1px; }
+        .badge.tg, .badge.viber, .badge.call { background: #111; color: #fff; }
+
+        .phone-link { color: #000; text-decoration: none; font-weight: 600; border-bottom: 1px solid #ddd; transition: border-color 0.2s; }
+        .phone-link:hover { border-color: #000; }
+
+        .delete-btn { background: #fff; color: #888; border: 1.5px solid #e2e2e2; padding: 7px 14px; border-radius: 0; cursor: pointer; font-family: inherit; font-weight: 600; font-size: 13px; transition: 0.2s; }
+        .delete-btn:hover { border-color: #d11; color: #d11; }
+        .edit-btn { background: #fff; color: #444; border: 1.5px solid #e2e2e2; padding: 7px 14px; border-radius: 0; cursor: pointer; font-family: inherit; font-weight: 600; font-size: 13px; transition: 0.2s; margin-right: 6px; }
+        .edit-btn:hover { border-color: #000; color: #000; background: #fafafa; }
+        .cancel-btn { grid-column: span 2; background: #555; color: #fff; border: none; padding: 15px; font-family: inherit; font-weight: 600; font-size: 15px; border-radius: 0; cursor: pointer; transition: 0.3s; display: none; }
+        .cancel-btn:hover { background: #333; transform: translateY(-2px); }
 
         /* Секція форми проектів */
-        .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; background: #fafafa; padding: 20px; border-radius: 8px; margin-bottom: 25px; border: 1px solid #eaeaea; }
-        .form-group { display: flex; flex-direction: column; gap: 5px; min-width: 0; }
+        .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; background: #fff; padding: 24px; border-radius: 0; margin-bottom: 8px; border: 1px solid var(--border); }
+        .form-group { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
         .form-group.full { grid-column: span 2; }
-        label { font-size: 13px; font-weight: 600; color: #444; }
-        input, textarea { width: 100%; max-width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 6px; font-size: 14px; }
+        label { font-size: 13px; font-weight: 600; color: #333; }
+        input, textarea { width: 100%; max-width: 100%; font-family: inherit; padding: 12px; border: 1px solid transparent; border-radius: 0; font-size: 14px; background: #f9f9f9; transition: border-color 0.15s ease, background 0.15s ease; }
         textarea { resize: vertical; min-height: 64px; }
-        input:focus, textarea:focus { border-color: #0070f3; outline: none; }
-        .submit-btn { grid-column: span 2; background: #0070f3; color: white; border: none; padding: 12px; font-weight: bold; border-radius: 6px; cursor: pointer; transition: 0.2s; }
-        .submit-btn:hover { background: #0059c6; }
+        input:focus, textarea:focus { border-color: #000; outline: none; background: #fff; }
+        .submit-btn { grid-column: span 2; background: #000; color: #fff; border: none; padding: 15px; font-family: inherit; font-weight: 600; font-size: 15px; border-radius: 0; cursor: pointer; transition: 0.3s; }
+        .submit-btn:hover { background: #333; transform: translateY(-2px); }
 
-        .proj-img-preview { width: 60px; height: 40px; object-fit: cover; border-radius: 4px; border: 1px solid #eee; }
+        .proj-img-preview { width: 64px; height: 44px; object-fit: cover; border-radius: 0; border: 1px solid var(--border); }
+
+        /* Завантаження зображення: дропзона + прев'ю з можливістю прибрати */
+        .img-dropzone { border: 1.5px dashed #cfcfcf; padding: 22px; display: flex; flex-direction: column; align-items: center; gap: 4px; cursor: pointer; color: #888; font-size: 13px; text-align: center; transition: border-color 0.2s, background 0.2s, color 0.2s; }
+        .img-dropzone:hover { border-color: #000; background: #fafafa; color: #000; }
+        .img-dropzone .icon { font-size: 24px; line-height: 1; }
+        .img-dropzone small { color: #aaa; font-size: 11px; }
+        .img-preview-wrap { display: none; flex-direction: column; align-items: flex-start; gap: 10px; }
+        .img-preview-wrap img { width: 100%; max-width: 220px; height: 132px; object-fit: cover; border: 1px solid var(--border); }
+        .img-remove-btn { background: #fff; border: 1.5px solid #e2e2e2; color: #777; padding: 7px 14px; font-family: inherit; font-size: 12.5px; font-weight: 600; border-radius: 0; cursor: pointer; transition: 0.2s; }
+        .img-remove-btn:hover { border-color: #d11; color: #d11; }
 
         /* Горизонтальний скрол для таблиць на вузьких екранах */
         .table-wrap { width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; }
@@ -322,26 +486,33 @@ app.get('/admin', (req, res) => {
 
         /* Адаптив */
         @media (max-width: 768px) {
-            body { padding: 20px 12px; }
-            .container { padding: 20px 16px; border-radius: 10px; }
-            h1 { font-size: 20px; flex-direction: column; align-items: flex-start; gap: 10px; }
-            .tabs { flex-wrap: wrap; gap: 6px; }
-            .tab-btn { font-size: 14px; padding: 8px 12px; }
-            .form-grid { grid-template-columns: 1fr; gap: 12px; padding: 16px; }
+            .admin-nav { height: auto; padding: 16px; flex-wrap: wrap; gap: 12px; }
+            .admin-nav .view-site { margin-left: 0; }
+            .container { margin: 28px auto; padding: 0 16px; }
+            h2.page-title { font-size: 22px; }
+            .tabs { flex-wrap: wrap; gap: 2px; }
+            .tab-btn { font-size: 14px; padding: 10px 12px; }
+            .form-grid { grid-template-columns: 1fr; gap: 14px; padding: 18px; }
             .form-group.full, .submit-btn { grid-column: span 1; }
         }
         @media (max-width: 480px) {
-            body { padding: 12px 8px; }
-            .container { padding: 16px 12px; }
-            h1 { font-size: 18px; }
+            .container { margin: 20px auto; }
+            h2.page-title { font-size: 20px; }
         }
     </style>
 </head>
 <body>
 
+<nav class="admin-nav">
+    <span class="brand">Dmytro Kvasha</span>
+    <span class="tag">Адмінка</span>
+    <a class="view-site" href="/" target="_blank">Перейти на сайт</a>
+</nav>
+
 <div class="container">
-    <h1>Панель керування <span style="font-size: 14px; background: #0070f3; color: white; padding: 4px 10px; border-radius: 20px;">CMS SQLite</span></h1>
-    
+    <h2 class="page-title">Панель керування</h2>
+    <p class="page-sub">Заявки з форми та керування портфоліо сайту</p>
+
     <div class="tabs">
         <button class="tab-btn active" onclick="switchTab('leads')">Заявки з форми (<span id="leads-count">0</span>)</button>
         <button class="tab-btn" onclick="switchTab('portfolio')">Управління портфоліо</button>
@@ -369,8 +540,9 @@ app.get('/admin', (req, res) => {
     </div>
 
     <div id="tab-portfolio" class="tab-content">
-        <h3>Додати нову роботу в портфоліо</h3>
+        <h3 id="form-title">Додати нову роботу в портфоліо</h3>
         <form id="project-form" onsubmit="addProject(event)" class="form-grid">
+            <input type="hidden" id="p-current-img" value="">
             <div class="form-group">
                 <label>Назва роботи (Укр)</label>
                 <input type="text" id="p-titleUk" required placeholder="Наприклад: Сайт корпоративних послуг">
@@ -388,8 +560,17 @@ app.get('/admin', (req, res) => {
                 <textarea id="p-descEn" rows="2" placeholder="Короткий опис проекту англійською..."></textarea>
             </div>
             <div class="form-group">
-                <label>Посилання на зображення (URL)</label>
-                <input type="url" id="p-img" placeholder="https://images.unsplash.com/...">
+                <label>Зображення роботи (файл)</label>
+                <input type="file" id="p-img" accept="image/*" onchange="previewImage(event)" hidden>
+                <div id="img-dropzone" class="img-dropzone" onclick="document.getElementById('p-img').click()">
+                    <span class="icon">＋</span>
+                    <span>Натисніть, щоб обрати фото</span>
+                    <small>JPG, PNG · до 5 МБ</small>
+                </div>
+                <div id="img-preview-wrap" class="img-preview-wrap">
+                    <img id="img-preview" src="" alt="Прев'ю зображення">
+                    <button type="button" class="img-remove-btn" onclick="clearImage()">✕ Прибрати фото</button>
+                </div>
             </div>
             <div class="form-group">
                 <label>Теги (через кому)</label>
@@ -399,7 +580,8 @@ app.get('/admin', (req, res) => {
                 <label>Посилання на готовий проект / сайт (Link)</label>
                 <input type="text" id="p-link" value="#">
             </div>
-            <button type="submit" class="submit-btn">Опублікувати на сайті</button>
+            <button type="button" id="cancel-btn" class="cancel-btn" onclick="cancelEdit()">✕ Скасувати редагування</button>
+            <button type="submit" id="submit-btn" class="submit-btn">Опублікувати на сайті</button>
         </form>
 
         <h3>Поточні роботи на сайті</h3>
@@ -488,35 +670,130 @@ app.get('/admin', (req, res) => {
                 <td><img src="\${p.img}" class="proj-img-preview" alt=""></td>
                 <td><b>\${p.titleUk}</b><br><span style="color:#666; font-size:12px;">\${p.titleEn}</span></td>
                 <td>\${p.tags.map(t => \`<span class="badge">\${t}</span>\`).join(' ')}</td>
-                <td><button class="delete-btn" onclick="deleteProject(\${p.id})">Видалити</button></td>
+                <td>
+                    <button class="edit-btn" onclick="editProject(\${p.id})">Редагувати</button>
+                    <button class="delete-btn" onclick="deleteProject(\${p.id})">Видалити</button>
+                </td>
             </tr>
         \`).join('');
     }
 
+    // ── Стан режиму редагування ──
+    let editMode = false;
+    let editProjectId = null;
+
+    // Заповнити форму даними обраного проекту
+    async function editProject(id) {
+        const res = await fetch('/api/projects');
+        const data = await res.json();
+        const p = data.find(x => x.id === id);
+        if (!p) return;
+
+        editMode = true;
+        editProjectId = id;
+
+        document.getElementById('p-titleUk').value = p.titleUk;
+        document.getElementById('p-titleEn').value = p.titleEn;
+        document.getElementById('p-descUk').value  = p.descUk;
+        document.getElementById('p-descEn').value  = p.descEn;
+        document.getElementById('p-tags').value     = p.tags.join(', ');
+        document.getElementById('p-link').value     = p.link;
+        document.getElementById('p-current-img').value = p.img;
+
+        // Показуємо прев'ю поточного зображення
+        if (p.img) {
+            document.getElementById('img-preview').src = p.img;
+            document.getElementById('img-preview-wrap').style.display = 'flex';
+            document.getElementById('img-dropzone').style.display    = 'none';
+        }
+
+        document.getElementById('form-title').textContent    = 'Редагувати роботу';
+        document.getElementById('submit-btn').textContent    = 'Зберегти зміни';
+        document.getElementById('cancel-btn').style.display  = 'block';
+
+        document.getElementById('project-form').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+
+    // Скасувати редагування і повернути форму до стану "додати"
+    function cancelEdit() {
+        editMode = false;
+        editProjectId = null;
+
+        document.getElementById('project-form').reset();
+        clearImage();
+        document.getElementById('p-link').value        = '#';
+        document.getElementById('p-current-img').value = '';
+
+        document.getElementById('form-title').textContent   = 'Додати нову роботу в портфоліо';
+        document.getElementById('submit-btn').textContent   = 'Опублікувати на сайті';
+        document.getElementById('cancel-btn').style.display = 'none';
+    }
+
     async function addProject(e) {
         e.preventDefault();
+
+        // 1. Завантажуємо нове зображення, якщо обране
+        let imgUrl = document.getElementById('p-current-img').value; // для режиму редагування — зберігаємо старе
+        const fileInput = document.getElementById('p-img');
+        if (fileInput.files[0]) {
+            const fd = new FormData();
+            fd.append('image', fileInput.files[0]);
+            const up = await fetch('/admin/api/upload', { method: 'POST', body: fd });
+            if (!up.ok) {
+                alert('Не вдалося завантажити зображення (перевірте формат і розмір до 5 МБ)');
+                return;
+            }
+            const upData = await up.json();
+            imgUrl = upData.url;
+        }
+
+        // 2. Зберігаємо або оновлюємо проект
         const body = {
             titleUk: document.getElementById('p-titleUk').value,
             titleEn: document.getElementById('p-titleEn').value,
-            descUk: document.getElementById('p-descUk').value,
-            descEn: document.getElementById('p-descEn').value,
-            img: document.getElementById('p-img').value,
-            tags: document.getElementById('p-tags').value,
-            link: document.getElementById('p-link').value
+            descUk:  document.getElementById('p-descUk').value,
+            descEn:  document.getElementById('p-descEn').value,
+            img:     imgUrl,
+            tags:    document.getElementById('p-tags').value,
+            link:    document.getElementById('p-link').value
         };
 
-        const res = await fetch('/admin/api/projects', {
-            method: 'POST',
+        const method = editMode ? 'PUT' : 'POST';
+        const url    = editMode ? '/admin/api/projects/' + editProjectId : '/admin/api/projects';
+
+        const res = await fetch(url, {
+            method,
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(body)
         });
 
-        if(res.ok) {
-            document.getElementById('project-form').reset();
-            document.getElementById('p-link').value = "#";
+        if (res.ok) {
+            const msg = editMode ? 'Проект успішно оновлено!' : 'Проект успішно додано!';
+            cancelEdit();
             loadProjects();
-            alert('Проект успішно додано!');
+            alert(msg);
         }
+    }
+
+    // Прев'ю обраного фото + можливість прибрати його ДО завантаження
+    function previewImage(e) {
+        const file = e.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = (ev) => {
+            document.getElementById('img-preview').src = ev.target.result;
+            document.getElementById('img-preview-wrap').style.display = 'flex';
+            document.getElementById('img-dropzone').style.display = 'none';
+        };
+        reader.readAsDataURL(file);
+    }
+
+    function clearImage() {
+        const input = document.getElementById('p-img');
+        input.value = '';
+        document.getElementById('img-preview').src = '';
+        document.getElementById('img-preview-wrap').style.display = 'none';
+        document.getElementById('img-dropzone').style.display = 'flex';
     }
 
     async function deleteProject(id) {
