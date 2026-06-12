@@ -213,101 +213,114 @@ body {
 }
 
 /* --- ЖИВА 3D ВІЗИТКА --- */
-@keyframes float {
-    0%, 100% { transform: translateY(0px) rotateX(0deg) rotateY(0deg); }
-    50%       { transform: translateY(-12px) rotateX(1deg) rotateY(-1deg); }
-}
-
 .card-scene {
-    perspective: 900px;
     width: 100%;
-    max-width: 320px;
+    max-width: 420px;
     margin: 0 auto;
+    perspective: 1100px;
 }
 
 .business-card {
-    background: #000;
-    color: #fff;
-    padding: 40px 30px;
-    width: 100%;
-    min-height: 480px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    box-shadow: 0 24px 48px rgba(0,0,0,0.22), 0 8px 16px rgba(0,0,0,0.12);
-    border-radius: 12px;
     position: relative;
-    overflow: hidden;
-    animation: float 5s ease-in-out infinite;
+    width: 100%;
+    padding: clamp(24px, 4vw, 36px);
+    border-radius: 18px;
+    color: #fff;
+    background: radial-gradient(circle at 50% 0%, #1a1a1a 0%, #050505 70%);
+    box-shadow: 0 30px 60px -20px rgba(0, 0, 0, 0.45);
     transform-style: preserve-3d;
-    transition: box-shadow 0.3s ease, transform 0.08s linear;
+    transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.25s cubic-bezier(0.4, 0, 0.2, 1);
     will-change: transform;
-    cursor: pointer;
 }
 
-.business-card::before {
+/* script.js drops the transform transition while tracking the cursor (1:1 tilt) */
+.business-card.is-tilting {
+    transition: box-shadow 0.1s ease;
+}
+
+/* cursor-tracked shine — uses --shine-x / --shine-y set by script.js */
+.business-card::after {
     content: '';
     position: absolute;
     inset: 0;
-    background: radial-gradient(circle at 50% 50%, rgba(255,255,255,0.12) 0%, transparent 70%);
+    border-radius: inherit;
+    background: radial-gradient(circle at var(--shine-x, 50%) var(--shine-y, 50%), rgba(255, 255, 255, 0.18), transparent 45%);
     opacity: 0;
-    transition: opacity 0.3s ease;
+    transition: opacity 0.25s ease;
     pointer-events: none;
-    border-radius: 12px;
+}
+.business-card.is-tilting::after { opacity: 1; }
+
+.business-card img,
+.card-avatar {
+    display: block;
+    width: 64px;
+    height: 64px;
+    margin-bottom: 1.2rem;
+    border-radius: 14px;
+    object-fit: cover;
+    transform: translateZ(40px);
 }
 
-.business-card:hover::before {
-    opacity: 1;
+.card-info {
+    width: 100%;
+    transform: translateZ(30px);
 }
 
-.business-card.is-tilting {
-    animation-play-state: paused;
+.card-name {
+    font-size: 1.4rem;
+    font-weight: 800;
+    letter-spacing: -0.01em;
+    margin-bottom: 4px;
 }
 
-.card-avatar { 
-    width: 120px; 
-    height: 120px;  
-    border-radius: 50%; 
-    object-fit: cover; 
-    margin-bottom: 20px; 
-    border: 2px solid #333; 
-    
+.card-role {
+    margin-bottom: 1.3rem;
+    color: rgba(255, 255, 255, 0.6);
+    font-size: 0.95rem;
 }
 
-.card-info { 
-    text-align: center; 
-    width: 100%; 
+.card-contacts {
+    display: flex;
+    flex-direction: column;
+    gap: 0.55rem;
 }
 
-.card-name { 
-    font-size: 24px; 
-    font-weight: 700; 
-    margin-bottom: 5px; 
+.card-contact-link {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    color: rgba(255, 255, 255, 0.85);
+    font-size: 0.95rem;
 }
 
-.card-role { 
-    font-size: 13px; 
-    opacity: 0.6; 
-    text-transform: uppercase; 
-    letter-spacing: 1px; 
+.card-socials {
+    display: flex;
+    gap: 0.6rem;
+    margin-top: 1.3rem;
 }
 
-.card-contacts { 
-    font-size: 14px; 
-    margin-top: 35px; 
-    opacity: 0.8; 
-    display: flex; 
-    flex-direction: column; 
-    gap: 15px; 
-    text-align: left; 
-    padding-left: 10px; 
+.card-social-link {
+    display: grid;
+    place-items: center;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    color: #fff;
+    text-decoration: none;
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    transition: background 0.25s ease, color 0.25s ease, transform 0.25s ease;
+}
+.card-social-link:hover {
+    background: #fff;
+    color: #000;
+    transform: translateY(-3px);
 }
 
-.card-contacts i { 
-    margin-right: 12px; 
-    font-size: 18px; 
-    vertical-align: middle; 
+@keyframes float {
+    0%, 100% { transform: translateY(0); }
+    50%      { transform: translateY(-12px); }
 }
 
 /* --- Дизайн элементов --- */
@@ -1141,9 +1154,6 @@ body.modal-open {
     .hero .btn-dark { display: inline-block !important; }
     #linesCanvas { width: 100%; opacity: 0.08; }
 
-    /* Візитка */
-    .card-scene { margin-top: 40px; }
-    .business-card { min-height: 380px; padding: 30px 24px; }
 
     /* Контакти */
     .contact-icon { font-size: 26px; margin-right: 18px; }
@@ -1175,9 +1185,6 @@ body.modal-open {
     #submitForm { width: 100%; }
     .modal-footer { padding-left: 16px; padding-right: 16px; }
 
-    .business-card { min-height: 340px; padding: 28px 20px; }
-    .card-name { font-size: 20px; }
-    .card-avatar { width: 90px; height: 90px; }
 
     /* Toast на повну ширину */
     #toastContainer {
@@ -1232,12 +1239,6 @@ body.modal-open {
     .v-acc-title { font-size: 11px !important; }
     .v-acc-toggle { width: 26px; height: 26px; font-size: 11px; }
 
-    /* Business card */
-    .business-card { padding: 24px 14px; min-height: 300px; }
-    .card-avatar { width: 80px; height: 80px; }
-    .card-name { font-size: 18px; }
-    .card-contacts { font-size: 12px; gap: 10px; margin-top: 20px; }
-    .card-contacts i { font-size: 14px; margin-right: 8px; }
 
     /* Portfolio */
     .portfolio-img { height: 180px; }
@@ -1249,28 +1250,79 @@ body.modal-open {
     }
 }
 
-    
-/* --- СОЦІАЛЬНІ ІКОНКИ НА КАРТЦІ --- */
-.card-socials {
-    display: flex;
-    gap: 24px;
-    margin-top: 28px;
-    justify-content: center;
+/* ===== Тосты (всплывающие уведомления) =====
+   Вставь этот блок в конец своего style.css.
+   Фон у всех тостов чёрный; тип различается цветом иконки.
+   Селекторы сделаны как .toast-msg.toast-... — так они
+   гарантированно перекроют любые старые правила для тостов. */
+
+#toastContainer {
+  position: fixed;
+  top: 24px;
+  right: 24px;
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  pointer-events: none;          /* контейнер не перехватывает клики по странице */
 }
 
-.card-social-link {
-    color: rgba(255,255,255,0.75);
-    font-size: 22px;
-    text-decoration: none;
-    transition: color 0.2s ease, transform 0.2s ease;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    min-width: 44px;
-    min-height: 44px;
+.toast-msg {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 280px;
+  max-width: 380px;
+  padding: 14px 18px;
+  border-radius: 14px;
+  background: #1a1a1a;                          /* практически чёрный; для чистого чёрного поставь #000 */
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: #fff;
+  font-family: 'Inter', system-ui, sans-serif;
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1.4;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+  pointer-events: auto;
+  /* стартовое (скрытое) состояние */
+  opacity: 0;
+  transform: translateX(120%);
+  transition: opacity .32s ease,
+              transform .32s cubic-bezier(.21, 1.02, .73, 1);
 }
 
-.card-social-link:hover {
-    color: #fff;
-    transform: translateY(-3px);
+/* класс .show добавляется из script.js, когда тост появляется */
+.toast-msg.show {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+.toast-icon {
+  font-size: 20px;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+/* --- Чёрный фон у всех; тип различаем по цвету иконки --- */
+/* Тостами показываются только success / limit / error.
+   Валидация полей («введіть ім'я», «коректний номер» тощо) выводится
+   баннером внутри модального окна (#validationBanner), а не тостом —
+   поэтому отдельного toast-warning здесь нет. */
+.toast-msg.toast-success .toast-icon { color: #22c55e; }   /* успех — «Заявку відправлено!» */
+.toast-msg.toast-error   .toast-icon { color: #f87171; }   /* ошибка отправки / нет связи с сервером */
+.toast-msg.toast-limit   .toast-icon { color: #60a5fa; }   /* лимит запросов (429) */
+
+/* --- Мобильные экраны: прижимаем к низу на всю ширину --- */
+@media (max-width: 480px) {
+  #toastContainer {
+    top: auto;
+    bottom: 16px;
+    left: 16px;
+    right: 16px;
+  }
+  .toast-msg {
+    min-width: 0;
+    max-width: none;
+    width: 100%;
+  }
 }
