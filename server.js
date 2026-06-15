@@ -875,30 +875,11 @@ app.get('/admin', (req, res) => {
 });
 
 // --- 9. СТОРІНКА 404 (спрацьовує, якщо жоден маршрут вище не підійшов) ---
+// Віддаємо окремий файл 404.html, а не вбудований у код HTML.
+// Завдяки цьому дизайн сторінки можна змінювати прямо в 404.html,
+// не чіпаючи код сервера.
 app.use((req, res) => {
-    res.status(404).send(`
-<!DOCTYPE html>
-<html lang="uk">
-<head>
-    <meta charset="UTF-8"/>
-    <title>404 — Сторінку не знайдено</title>
-    <style>
-        body { font-family: sans-serif; display: flex; align-items: center; justify-content: center; height: 100vh; background: #fafafa; margin: 0; }
-        .card { text-align: center; background: white; padding: 40px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
-        h1 { margin: 0 0 10px; font-size: 40px; color: #333; }
-        p { color: #666; margin: 0 0 20px; }
-        a { display: inline-block; padding: 10px 20px; background: #000; color: white; text-decoration: none; border-radius: 4px; font-size: 14px; }
-    </style>
-</head>
-<body>
-    <div class="card">
-        <h1>404</h1>
-        <p>Упс! Сторінку, яку ви шукаєте, не знайдено.</p>
-        <a href="/">На головну</a>
-    </div>
-</body>
-</html>
-    `);
+    res.status(404).sendFile(path.join(__dirname, '404.html'));
 });
 
 // --- 10. ЗАПУСК СЕРВЕРА ---
