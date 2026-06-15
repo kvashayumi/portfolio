@@ -1,47 +1,66 @@
-// @ts-nocheck
-require('dotenv').config();
+/* ============================================================
+ *  СЕРВЕР ПОРТФОЛІО  (Node.js + Express)
+ *  Карта файлу — де що шукати:
+ *    1) Підключення модулів і базові налаштування сервера
+ *    2) Налаштування завантаження зображень (multer)
+ *    3) Налаштування логів (winston)
+ *    4) Ініціалізація бази даних SQLite (заявки + проекти)
+ *    5) Захист від спаму (rate limit)
+ *    6) Публічні API сайту: GET /api/projects, POST /submit (+ email)
+ *    7) Адмін-панель: авторизація + REST API (/admin/api/...)
+ *    8) HTML-сторінка адмінки (/admin)
+ *    9) Сторінка 404
+ *   10) Запуск сервера
+ * ============================================================ */
 
-const express    = require('express');
-const cors       = require('cors');
-const path       = require('path');
-const winston    = require('winston');
-const rateLimit  = require('express-rate-limit');
-const Database   = require('better-sqlite3');
-const multer     = require('multer');
-const fs         = require('fs');
-const crypto     = require('crypto');
-require('winston-daily-rotate-file');
+// --- 1. ПІДКЛЮЧЕННЯ МОДУЛІВ І БАЗОВІ НАЛАШТУВАННЯ ---
+require('dotenv').config();          // читаємо змінні з файлу .env
+
+const express    = require('express');         // веб-сервер
+const cors       = require('cors');            // дозвіл запитів з інших доменів
+const path       = require('path');            // робота зі шляхами до файлів
+const winston    = require('winston');         // запис логів
+const rateLimit  = require('express-rate-limit'); // обмеження кількості запитів
+const Database   = require('better-sqlite3');  // база даних SQLite
+const multer     = require('multer');          // приймання завантажених файлів
+const fs         = require('fs');              // робота з файловою системою
+const crypto     = require('crypto');          // хешування (для безпечної авторизації)
+require('winston-daily-rotate-file');          // авто-ротація лог-файлів по днях
 
 const app  = express();
-const PORT = process.env.PORT || 8080;
+const PORT = process.env.PORT || 8080;         // порт від хостингу або 8080 локально
 
-app.set('trust proxy', 1);
+app.set('trust proxy', 1);                     // довіряємо проксі (потрібно на Railway)
 
+// Дозволяємо запити з фронтенду (домен береться з .env, або будь-який)
 app.use(cors({
     origin: process.env.CORS_ORIGIN || '*'
 }));
 
-app.use(express.json());
-app.use(express.static(path.join(__dirname)));
+app.use(express.json());                       // читаємо JSON у тілі запитів
+app.use(express.static(path.join(__dirname))); // роздаємо статичні файли (html, css, js, /uploads)
 
-// --- НАЛАШТУВАННЯ ЗАВАНТАЖЕННЯ ЗОБРАЖЕНЬ ---
+// --- 2. НАЛАШТУВАННЯ ЗАВАНТАЖЕННЯ ЗОБРАЖЕНЬ ---
 // Папка uploads/ роздається автоматично через express.static вище,
 // тож файл, збережений тут, одразу доступний за адресою /uploads/<ім'я>
 const uploadDir = path.join(__dirname, 'uploads');
-if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir);
+if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir); // створюємо папку, якщо її ще нема
 
+// Куди і під яким ім'ям зберігати файл (ім'я = час у мс + розширення, щоб не було збігів)
 const storage = multer.diskStorage({
     destination: uploadDir,
     filename: (req, file, cb) => cb(null, Date.now() + path.extname(file.originalname))
 });
 
+// Правила приймання файлів: тільки картинки, максимум 5 МБ
 const upload = multer({
     storage,
     limits: { fileSize: 5 * 1024 * 1024 }, // максимум 5 МБ на файл
-    fileFilter: (req, file, cb) => cb(null, file.mimetype.startsWith('image/'))
+    fileFilter: (req, file, cb) => cb(null, file.mimetype.startsWith('image/')) // лише image/*
 });
 
-// --- НАЛАШТУВАННЯ ЛОГІВ ---
+// --- 3. НАЛАШТУВАННЯ ЛОГІВ ---
+// Пишемо логи у файли в папці logs/ з ротацією (новий файл щодня, архів, зберігаємо 14 днів)
 const transport = new winston.transports.DailyRotateFile({
     dirname: path.join(__dirname, 'logs'),
     filename: 'server-%DATE%.log',
@@ -51,6 +70,7 @@ const transport = new winston.transports.DailyRotateFile({
     maxFiles: '14d'
 });
 
+// logger пише одночасно у файл і в консоль
 const logger = winston.createLogger({
     transports: [
         transport,
@@ -58,10 +78,10 @@ const logger = winston.createLogger({
     ]
 });
 
-// --- ІНІЦІАЛІЗАЦІЯ БАЗИ ДАНИХ SQLite ---
-const db = new Database('submissions.db');
+// --- 4. ІНІЦІАЛІЗАЦІЯ БАЗИ ДАНИХ SQLite ---
+const db = new Database('submissions.db'); // файл бази (створюється автоматично)
 
-// Таблиця заявок
+// Таблиця заявок (дані з форми зворотного зв'язку)
 db.prepare(`
     CREATE TABLE IF NOT EXISTS submissions (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -125,16 +145,17 @@ if (projectCount.count === 0) {
     logger.info("[DB] База даних успішно ініціалізована базовими проектами.");
 }
 
-// --- ЗАХИСТ ВІД СПАМУ ---
+// --- 5. ЗАХИСТ ВІД СПАМУ ---
+// Не більше 5 надсилань форми за 10 хвилин з однієї IP-адреси
 const submitLimiter = rateLimit({
     windowMs: 10 * 60 * 1000,
     max: 5,
     message: { error: "Занадто багато запитів. Спробуйте пізніше." }
 });
 
-// --- API МАРШРУТИ ДЛЯ САЙТУ ---
+// --- 6. ПУБЛІЧНІ API МАРШРУТИ ДЛЯ САЙТУ ---
 
-// Отримання проектів для головної сторінки
+// GET /api/projects — віддає список проектів для головної сторінки
 app.get('/api/projects', (req, res) => {
     try {
         const projects = db.prepare("SELECT * FROM projects ORDER BY id DESC").all();
@@ -155,14 +176,54 @@ app.get('/api/projects', (req, res) => {
     }
 });
 
-// Обробка форми з сайту
+// POST /submit — приймає форму з сайту: зберігає в базу + надсилає лист на пошту
 app.post('/submit', submitLimiter, async (req, res) => {
-    const { name, phone, email, messenger, nick, message } = req.body;
+    const { name, phone, email, messenger, nick, message, honeypot } = req.body;
 
-    if (!name || !phone) {
-        return res.status(400).json({ error: "Ім'я та телефон є обов'язковими полями" });
+    // --- HONEYPOT: приховане поле-пастка для ботів ---
+    // Звичайний користувач його не бачить (display:none) і не заповнює.
+    // Якщо воно прийшло непорожнім — це автоматичний спам-бот.
+    // Відповідаємо «успіхом», але НІЧОГО не зберігаємо й не шлемо лист,
+    // щоб бот не зрозумів, що його відсіяли, і не підлаштувався.
+    if (typeof honeypot === 'string' && honeypot.trim() !== '') {
+        logger.warn(`[SPAM] Заблоковано надсилання форми: спрацював honeypot (IP ${req.ip}).`);
+        return res.status(200).json({ success: true, message: 'Заявку успішно отримано' });
     }
 
+    // --- СУВОРА СЕРВЕРНА ВАЛІДАЦІЯ ---
+    // Клієнтську перевірку легко обійти прямим POST-запитом (наприклад, через curl),
+    // тому ті самі правила обов'язково дублюємо на сервері.
+    const nameRaw  = typeof name === 'string' ? name.trim() : '';
+    const emailRaw = typeof email === 'string' ? email.trim() : '';
+    const phoneDigits = typeof phone === 'string' ? phone.replace(/\D/g, '') : ''; // лише цифри
+
+    // Ім'я: обов'язкове, 2–100 символів, тільки літери, пробіли, дефіс та апостроф
+    if (nameRaw.length < 2 || nameRaw.length > 100) {
+        return res.status(400).json({ error: "Ім'я має містити від 2 до 100 символів." });
+    }
+    if (/[^\p{L}\s\-']/u.test(nameRaw)) {
+        return res.status(400).json({ error: "Ім'я не повинно містити цифри або спеціальні символи." });
+    }
+    // Телефон: обов'язковий, від 8 до 15 цифр (міжнародний формат E.164)
+    if (phoneDigits.length < 8 || phoneDigits.length > 15) {
+        return res.status(400).json({ error: "Введіть коректний номер телефону." });
+    }
+    // Пошта: необов'язкова, але якщо вказана — має бути валідною
+    if (emailRaw && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailRaw)) {
+        return res.status(400).json({ error: "Введіть коректну адресу пошти." });
+    }
+    // Захист від занадто довгих значень (повідомлення / нік / спосіб зв'язку)
+    if (typeof message === 'string' && message.length > 2000) {
+        return res.status(400).json({ error: "Повідомлення занадто довге (максимум 2000 символів)." });
+    }
+    if (typeof nick === 'string' && nick.length > 100) {
+        return res.status(400).json({ error: "Нік занадто довгий (максимум 100 символів)." });
+    }
+    if (typeof messenger === 'string' && messenger.length > 100) {
+        return res.status(400).json({ error: "Назва способу зв'язку занадто довга (максимум 100 символів)." });
+    }
+
+    // Очищення введених даних від HTML-тегів (захист від XSS) + значення за замовчуванням
     const nameClean      = name.replace(/<\/?[^>]+(>|$)/g, "").trim();
     const phoneClean     = phone.trim();
     const emailClean     = email ? email.replace(/<\/?[^>]+(>|$)/g, "").trim() : "";
@@ -201,7 +262,7 @@ app.post('/submit', submitLimiter, async (req, res) => {
             </div>
         `;
 
-        // Используем встроенный глобальный fetch Node.js
+        // Надсилаємо лист через вбудований глобальний fetch Node.js
         const resResend = await fetch('https://api.resend.com/emails', {
             method: 'POST',
             headers: {
@@ -234,7 +295,7 @@ app.post('/submit', submitLimiter, async (req, res) => {
 });
 
 
-// --- СЕКЦІЯ АДМІН-ПАНЕЛІ (REST API + UI) ---
+// --- 7. АДМІН-ПАНЕЛЬ: АВТОРИЗАЦІЯ + REST API ---
 
 // Порівняння рядків, стійке до timing-атак.
 // Хешуємо обидва значення до фіксованої довжини (32 байти),
@@ -375,7 +436,9 @@ app.delete('/admin/api/projects/:id', (req, res) => {
     }
 });
 
-// Візуальний інтерфейс адмінки
+// --- 8. HTML-СТОРІНКА АДМІНКИ (візуальний інтерфейс на /admin) ---
+// Нижче — вся сторінка адмінки одним рядком: стилі (<style>), розмітка
+// (вкладки «Заявки» і «Портфоліо») та скрипти (<script>) для роботи з API.
 app.get('/admin', (req, res) => {
     res.send(`
 <!DOCTYPE html>
@@ -811,7 +874,7 @@ app.get('/admin', (req, res) => {
     `);
 });
 
-// --- СТОРІНКА 404 ---
+// --- 9. СТОРІНКА 404 (спрацьовує, якщо жоден маршрут вище не підійшов) ---
 app.use((req, res) => {
     res.status(404).send(`
 <!DOCTYPE html>
@@ -838,7 +901,7 @@ app.use((req, res) => {
     `);
 });
 
-// --- КРИТИЧНО НЕОБХІДНИЙ ЗАПУСК СЕРВЕРА ---
+// --- 10. ЗАПУСК СЕРВЕРА ---
 app.listen(PORT, () => {
     console.log(`=========================================`);
     console.log(`  СЕРВЕР УСПІШНО ЗАПУЩЕНО!`);

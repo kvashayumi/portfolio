@@ -1,14 +1,20 @@
-// Поточний індекс відкотого проєкту для модального вікна
+// =====================================================
+//  МОДАЛКА ПРОЄКТУ (відкриття + навігація між проєктами)
+// =====================================================
+
+// Індекс проєкту, який зараз відкритий у модальному вікні
 window._currentProjectIndex = 0;
 
+// Відкриває модалку проєкту за його індексом у масиві даних
 function openProjectModal(dataIndex) {
-    const lang = localStorage.getItem('lang') || 'uk';
+    const lang = localStorage.getItem('lang') || 'uk';   // поточна мова (uk за замовчуванням)
     const data = window._portfolioData;
-    if (!data || !data[dataIndex]) return;
+    if (!data || !data[dataIndex]) return;                // немає таких даних — виходимо
 
     window._currentProjectIndex = dataIndex;
     const item = data[dataIndex];
 
+    // Заповнюємо вміст модалки даними проєкту (текст залежить від мови)
     document.getElementById('pmImg').src       = item.img;
     document.getElementById('pmImg').alt       = lang === 'uk' ? item.titleUk : item.titleEn;
     document.getElementById('pmTitle').textContent = lang === 'uk' ? item.titleUk : item.titleEn;
@@ -17,25 +23,29 @@ function openProjectModal(dataIndex) {
     document.getElementById('pmLink').textContent  = lang === 'uk' ? 'Переглянути сайт' : 'View Site';
 
     const tagsEl = document.getElementById('pmTags');
-    
+
+    // Теги можуть прийти як JSON-рядок, масив або рядок через кому — зводимо все до масиву
     let tagsArray = [];
     try {
         tagsArray = typeof item.tags === 'string' ? JSON.parse(item.tags) : (Array.isArray(item.tags) ? item.tags : []);
     } catch (e) {
         tagsArray = item.tags ? item.tags.split(',').map(t => t.trim()) : [];
     }
-    
+
+    // Рендеримо теги у вигляді span-ів
     tagsEl.innerHTML = tagsArray.map(t => `<span class="project-tag">${t}</span>`).join('');
 
-    // Ховати стрілки навігації, коли немає куди перемикати
+    // Ховаємо стрілки навігації, коли немає куди перемикати (перший / останній проєкт)
     const prevBtn = document.getElementById('pmPrev');
     const nextBtn = document.getElementById('pmNext');
     prevBtn.classList.toggle('hidden', dataIndex === 0);
     nextBtn.classList.toggle('hidden', dataIndex === data.length - 1);
 
+    // Показуємо модалку (Bootstrap)
     bootstrap.Modal.getOrCreateInstance(document.getElementById('projectModal')).show();
 }
 
+// Перемикання на попередній/наступний проєкт (direction = -1 або +1)
 function navigateProject(direction) {
     const data = window._portfolioData;
     const newIndex = window._currentProjectIndex + direction;
@@ -44,12 +54,15 @@ function navigateProject(direction) {
     }
 }
 
+// =====================================================
+//  ОСНОВНА ЛОГІКА — стартує після завантаження DOM
+// =====================================================
 document.addEventListener("DOMContentLoaded", () => {
     
     // --- ДИНАМІЧНІ ДАНІ ПОРТФОЛІО (Завантажуються з БД) ---
-    let portfolioData = []; 
-    const itemsPerPage = 3; 
-    let isExpanded = false; 
+    let portfolioData = [];          // масив проєктів із сервера
+    const itemsPerPage = 3;          // скільки карток показувати спочатку
+    let isExpanded = false;          // чи розгорнутий повний список робіт
     
     const portfolioGrid = document.getElementById('portfolioGrid');
     const loadMoreBtn = document.getElementById('loadMoreBtn');
@@ -60,6 +73,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const ctx = canvas.getContext('2d');
     let w, h, lines = [];
 
+    // Розрахунок розмірів полотна + генерація 6 хвилястих ліній з випадковими параметрами
     const init = () => {
         w = canvas.width = canvas.offsetWidth;
         h = canvas.height = canvas.offsetHeight;
@@ -71,6 +85,7 @@ document.addEventListener("DOMContentLoaded", () => {
         }));
     };
 
+    // Малювання одного кадру (синусоїдні лінії); цикл через requestAnimationFrame
     const draw = (t) => {
         ctx.clearRect(0, 0, w, h);
         ctx.strokeStyle = '#000';
@@ -86,10 +101,11 @@ document.addEventListener("DOMContentLoaded", () => {
         requestAnimationFrame(draw);
     };
 
-    window.addEventListener('resize', init);
+    window.addEventListener('resize', init);   // перерахунок ліній при зміні розміру вікна
     init();
     draw(0);
 
+    // Пауза анімації, коли вкладка неактивна (економія ресурсів)
     let rafId;
     document.addEventListener('visibilitychange', () => {
         if (document.hidden) {
@@ -100,16 +116,18 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
     // --- ФУНКЦІЯ ЗАВАНТАЖЕННЯ ДАНИХ З АДМІНКИ (API) ---
+    // Тягне список проєктів з /api/projects і запускає рендер
     async function fetchPortfolio() {
         try {
             const response = await fetch('/api/projects'); 
             if (!response.ok) throw new Error('Помилка при отриманні даних з сервера');
             
             portfolioData = await response.json();
-            window._portfolioData = portfolioData; 
+            window._portfolioData = portfolioData;   // зберігаємо глобально (для модалки проєкту)
             
             renderPortfolio(); 
         } catch (error) {
+            // Сервер недоступний — показуємо повідомлення про помилку
             console.error('Помилка завантаження проєктів:', error);
             portfolioGrid.innerHTML = `
                 <div class="col-10 text-center py-5 mx-auto">
@@ -120,14 +138,15 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // --- ДИНАМІЧНА ГЕНЕРАЦІЯ ТА ЗГОРТАННЯ ПОРТФОЛІО ---
 
-    // Чистий дизайн картки без бордера + кнопка "Детальніше / Details"
+    // Генерує HTML однієї картки проєкту (animate — чи додавати анімацію появи)
     const buildCard = (item, dataIndex, animIndex, animate) => {
         const title   = lang === 'uk' ? item.titleUk : item.titleEn;
         const desc    = lang === 'uk' ? item.descUk  : item.descEn;
         
-        // Повернули початкову назву кнопки
+        // Текст кнопки на картці
         const btnText = lang === 'uk' ? 'Детальніше' : 'Details'; 
         
+        // Затримка для каскадної появи карток (або зовсім без анімації)
         const delay   = animate ? `animation-delay:${animIndex * 0.1}s` : 'animation:none;opacity:1';
         return `
             <div class="col-md-4 portfolio-item" style="${delay}">
@@ -147,6 +166,7 @@ document.addEventListener("DOMContentLoaded", () => {
             </div>`;
     };
 
+    // Рендерить перші 3 картки; якщо проєктів немає — повідомлення, кнопку «Ще» ховаємо
     const renderPortfolio = () => {
         portfolioGrid.innerHTML = '';
         if (portfolioData.length === 0) {
@@ -155,6 +175,7 @@ document.addEventListener("DOMContentLoaded", () => {
             return;
         }
         
+        // Кнопку «Показати ще» показуємо тільки якщо проєктів більше за ліміт
         loadMoreBtn.style.display = portfolioData.length > itemsPerPage ? 'inline-block' : 'none';
         
         const limit = Math.min(itemsPerPage, portfolioData.length);
@@ -164,6 +185,7 @@ document.addEventListener("DOMContentLoaded", () => {
         updateBtn();
     };
 
+    // Оновлює напис кнопки залежно від стану (Показати ще / Згорнути) і мови
     const updateBtn = () => {
         if (!loadMoreBtn) return;
         loadMoreBtn.innerText = isExpanded
@@ -171,13 +193,16 @@ document.addEventListener("DOMContentLoaded", () => {
             : (lang === 'uk' ? loadMoreBtn.getAttribute('data-uk')      : loadMoreBtn.getAttribute('data-en'));
     };
 
+    // Клік по кнопці «Показати ще / Згорнути»
     loadMoreBtn.addEventListener('click', () => {
         if (!isExpanded) {
+            // Розгортаємо: додаємо решту карток
             isExpanded = true;
             for (let i = itemsPerPage; i < portfolioData.length; i++) {
                 portfolioGrid.insertAdjacentHTML('beforeend', buildCard(portfolioData[i], i, i - itemsPerPage, true));
             }
         } else {
+            // Згортаємо: плавно ховаємо й видаляємо зайві картки, потім скрол до секції
             isExpanded = false;
             const allItems = portfolioGrid.querySelectorAll('.portfolio-item');
             const extras = [...allItems].filter((_, i) => i >= itemsPerPage);
@@ -196,6 +221,7 @@ document.addEventListener("DOMContentLoaded", () => {
     // --- Перемикач мов ---
     const langBtn = document.getElementById('langBtn');
 
+    // Якщо при завантаженні вже вибрано EN — одразу перекладаємо весь текст і плейсхолдери
     if (lang === 'en') {
         langBtn.innerText = 'UK';
         document.querySelectorAll('[data-uk]').forEach(el => {
@@ -206,25 +232,29 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
+    // Клік по кнопці мови — перемикаємо uk <-> en і зберігаємо вибір
     langBtn.addEventListener('click', () => {
         lang = lang === 'uk' ? 'en' : 'uk';
         localStorage.setItem('lang', lang);
         langBtn.innerText = lang === 'uk' ? 'EN' : 'UK';
         
+        // Перекладаємо всі тексти з атрибутами data-uk / data-en
         document.querySelectorAll('[data-uk]').forEach(el => {
             el.innerHTML = el.getAttribute(`data-${lang}`);
         });
 
+        // Перекладаємо плейсхолдери полів
         document.querySelectorAll('[data-uk-placeholder]').forEach(input => {
             input.placeholder = input.getAttribute(`data-${lang}-placeholder`);
         });
 
-        // ВИПРАВЛЕННЯ ДЛЯ ПЛЕЙСХОЛДЕРУ МЕСЕНДЖЕРА
+        // Окремо перекладаємо плейсхолдер поля нікнейму месенджера
         const mInput = document.getElementById('messengerNick');
         if (mInput) {
             mInput.placeholder = lang === 'uk' ? "@username (необов'язково)" : "@username (optional)";
         }
 
+        // Перемальовуємо картки портфоліо новою мовою (без анімації)
         portfolioGrid.innerHTML = '';
         const limit = isExpanded ? portfolioData.length : Math.min(itemsPerPage, portfolioData.length);
         for (let i = 0; i < limit; i++) {
@@ -233,23 +263,25 @@ document.addEventListener("DOMContentLoaded", () => {
         updateBtn();
     });
 
-    fetchPortfolio();
+    fetchPortfolio();   // перше завантаження проєктів
 
-    // --- Логіка месенджерів (ВИПРАВЛЕНО) ---
+    // --- ЛОГІКА МЕСЕНДЖЕРІВ ---
     const mCheck = document.getElementById('messengerCheck');
     const mBlock = document.getElementById('messengerBlock');
     const mInput = document.getElementById('messengerNick');
     const tgBlock = document.getElementById('telegramNickBlock');
 
+    // Чекбокс «зв'язатися через месенджер»
     if (mCheck) {
         mCheck.addEventListener('change', () => {
             if (mCheck.checked) {
                 mBlock.style.display = 'block';
-                // При відкритті за замовчуванням обираємо Telegram і показуємо поле
+                // За замовчуванням обираємо Telegram і показуємо поле для ніку
                 document.querySelectorAll('.msg-btn').forEach(b => b.classList.remove('active'));
                 document.querySelector('.msg-btn[data-type="Telegram"]')?.classList.add('active');
                 if (tgBlock) tgBlock.style.display = 'block';
             } else {
+                // Знято галочку — ховаємо блок і чистимо поле
                 mBlock.style.display = 'none';
                 if (mInput) {
                     mInput.value = ""; 
@@ -259,13 +291,15 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
     
+    // Кнопки вибору месенджера (Telegram / Viber / WhatsApp тощо)
     document.querySelectorAll('.msg-btn').forEach(btn => {
         btn.addEventListener('click', function(e) {
             e.preventDefault();
+            // Робимо активною лише натиснуту кнопку
             document.querySelectorAll('.msg-btn').forEach(b => b.classList.remove('active'));
             this.classList.add('active');
             
-            // Якщо обрано Telegram — показуємо інпут, інакше — ховаємо і очищаємо
+            // Поле для ніку показуємо тільки для Telegram, для інших — ховаємо й чистимо
             if (this.getAttribute('data-type') === 'Telegram') {
                 if (tgBlock) tgBlock.style.display = 'block';
             } else {
@@ -284,6 +318,7 @@ document.addEventListener("DOMContentLoaded", () => {
     
     let iti;
     if (phoneInput) {
+        // Підключаємо intl-tel-input (вибір країни + код), стартова країна — Україна
         iti = window.intlTelInput(phoneInput, {
             initialCountry: "ua", 
             preferredCountries: [], 
@@ -292,8 +327,10 @@ document.addEventListener("DOMContentLoaded", () => {
             utilsScript: "https://cdn.jsdelivr.net/npm/intl-tel-input@18.2.1/build/js/utils.js" 
         });
 
+        // Підставляємо код країни у поле одразу
         phoneInput.value = "+" + iti.getSelectedCountryData().dialCode + " ";
 
+        // Вручну позиціонуємо випадаючий список країн (під полем, висота — до кнопки відправки)
         const positionDropdown = () => {
             const dropdown = document.querySelector('.iti__country-list');
             if (!dropdown) return;
@@ -308,12 +345,14 @@ document.addEventListener("DOMContentLoaded", () => {
             dropdown.style.maxHeight = Math.max(50, submitRect.bottom - inputRect.bottom) + 'px';
         };
 
+        // Перепозиціонування списку при відкритті та при зміні розміру вікна
         phoneInput.addEventListener('open:countrydropdown', positionDropdown);
         window.addEventListener('resize', () => {
             const dropdown = document.querySelector('.iti__country-list');
             if (dropdown && !dropdown.classList.contains('iti__hide')) positionDropdown();
         });
 
+        // Зміна країни — скидаємо валідацію і підставляємо новий код (якщо поле не у фокусі)
         phoneInput.addEventListener("countrychange", () => {
             phoneInput.classList.remove('is-invalid', 'is-valid');
             if (document.activeElement !== phoneInput) {
@@ -322,27 +361,30 @@ document.addEventListener("DOMContentLoaded", () => {
             }
         });
 
+        // Визначає максимальну довжину національної частини номера для поточної країни
         const getMaxNationalLength = () => {
             try {
                 const iso2 = iti.getSelectedCountryData().iso2;
                 const dialCode = iti.getSelectedCountryData().dialCode;
                 const example = window.intlTelInputUtils.getExampleNumber(iso2, false, window.intlTelInputUtils.numberType.MOBILE);
                 return example.replace(/\D/g, '').length - dialCode.length;
-            } catch (e) { return 15; }
+            } catch (e) { return 15; }   // fallback, якщо приклад недоступний
         };
 
+        // Жива маска/форматування номера під час введення
         phoneInput.addEventListener('input', () => {
             phoneInput.classList.remove('is-invalid');
             let val = phoneInput.value;
-            if (!val || val === "+") { phoneInput.value = "+"; return; }
-            if (!val.startsWith('+')) val = '+' + val.replace(/\+/g, '');
-            let digits = val.replace(/\D/g, "");
+            if (!val || val === "+") { phoneInput.value = "+"; return; }   // лишаємо «+», якщо порожньо
+            if (!val.startsWith('+')) val = '+' + val.replace(/\+/g, '');  // гарантуємо «+» на початку
+            let digits = val.replace(/\D/g, "");                            // лишаємо тільки цифри
             const dialCode = iti.getSelectedCountryData().dialCode;
             
+            // Якщо є код країни — форматуємо національну частину групами (XX XXX XX XX)
             if (dialCode && digits.startsWith(dialCode) && digits.length > dialCode.length) {
                 let nationalPart = digits.slice(dialCode.length);
                 const maxLen = getMaxNationalLength();
-                if (nationalPart.length > maxLen) nationalPart = nationalPart.slice(0, maxLen);
+                if (nationalPart.length > maxLen) nationalPart = nationalPart.slice(0, maxLen);   // обрізаємо зайве
                 
                 let formattedNational = "";
                 if (nationalPart.length > 0) {
@@ -356,6 +398,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 phoneInput.value = "+" + digits;
             }
 
+            // Підсвічуємо зеленим, якщо номер валідний
             if (iti.isValidNumber()) phoneInput.classList.add('is-valid');
             else phoneInput.classList.remove('is-valid');
         });
@@ -364,11 +407,12 @@ document.addEventListener("DOMContentLoaded", () => {
     // --- ЖИВА ВАЛІДАЦІЯ ІМЕНІ (Дозволяємо писати все, але підсвічуємо помилку) ---
     if (nameInput) {
         nameInput.addEventListener('input', () => {
+            // Заборонені будь-які символи, крім літер, пробілів, дефіса й апострофа
             const hasInvalidChars = /[^\p{L}\s\-']/u.test(nameInput.value);
             
             if (nameInput.value.trim().length >= 2 && !hasInvalidChars) {
                 nameInput.classList.remove('is-invalid');
-                nameInput.classList.add('is-valid');
+                nameInput.classList.add('is-valid');     // 2+ символи й усе коректно — зелений
             } else {
                 nameInput.classList.remove('is-valid');
                 if (hasInvalidChars) {
@@ -380,20 +424,21 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
-    // ВИПРАВЛЕННЯ ВАЛІДАЦІЇ ІНПУТУ МЕСЕНДЖЕРА
+    // --- ВАЛІДАЦІЯ ПОЛЯ МЕСЕНДЖЕРА (необов'язкове) ---
     if (mInput) {
         mInput.addEventListener('input', () => {
             if (mInput.value.trim().length > 0) {
                 mInput.classList.remove('is-invalid');
                 mInput.classList.add('is-valid');
             } else {
-                // Поле необов'язкове, тому просто знімаємо всі обведення
+                // Поле необов'язкове, тому при порожньому значенні просто знімаємо обведення
                 mInput.classList.remove('is-valid', 'is-invalid');
             }
         });
     }
 
     // --- TOAST + VALIDATION BANNER ---
+    // Показує спливне сповіщення (тост) заданого типу на ~3.5 с
     const showToast = (msg, type = 'success') => {
         const icons = { success: 'bi-check-circle', error: 'bi-x-circle', warning: 'bi-exclamation-circle', limit: 'bi-clock' };
         const container = document.getElementById('toastContainer');
@@ -401,13 +446,15 @@ document.addEventListener("DOMContentLoaded", () => {
         el.className = `toast-msg toast-${type}`;
         el.innerHTML = `<i class="bi ${icons[type] || icons.success} toast-icon"></i><span>${msg}</span>`;
         container.appendChild(el);
+        // Подвійний rAF — щоб спрацювала CSS-анімація появи
         requestAnimationFrame(() => { requestAnimationFrame(() => el.classList.add('show')); });
         setTimeout(() => {
             el.classList.remove('show');
-            setTimeout(() => el.remove(), 320);
+            setTimeout(() => el.remove(), 320);   // прибираємо з DOM після зникнення
         }, 3500);
     };
 
+    // Показує банер помилки валідації над формою на ~4 с
     const showBanner = (msg) => {
         const banner = document.getElementById('validationBanner');
         if (!banner) return;
@@ -423,6 +470,7 @@ document.addEventListener("DOMContentLoaded", () => {
         contactForm.addEventListener('click', async function(e) {
             e.preventDefault();
             
+            // Збираємо значення всіх полів форми
             const submitBtn = this;
             const name = nameInput ? nameInput.value : '';
             const emailInput = document.getElementById('userEmail');
@@ -432,10 +480,11 @@ document.addEventListener("DOMContentLoaded", () => {
             const activeMsgBtn = document.querySelector('.msg-btn.active');
             const messengerType = activeMsgBtn ? activeMsgBtn.innerText : '';
             const messengerNick = mInput ? mInput.value : '';
-            const honeypot = document.getElementById('username_hp')?.value || '';
+            const honeypot = document.getElementById('username_hp')?.value || '';   // приховане поле-пастка для ботів
 
-            const totalDigits = phoneInput ? phoneInput.value.replace(/\D/g, '') : ''; 
+            const totalDigits = phoneInput ? phoneInput.value.replace(/\D/g, '') : '';   // тільки цифри номера
             
+            // Скидаємо попередні стани валідації
             if (nameInput) nameInput.classList.remove('is-invalid', 'is-valid');
             if (phoneInput) phoneInput.classList.remove('is-invalid', 'is-valid');
             if (mInput) mInput.classList.remove('is-invalid', 'is-valid');
@@ -463,6 +512,7 @@ document.addEventListener("DOMContentLoaded", () => {
             }
             if (nameInput) nameInput.classList.add('is-valid');
 
+            // 4. Телефон — обов'язковий і має бути валідним
             if (totalDigits.length === 0) {
                 if (phoneInput) phoneInput.classList.add('is-invalid');
                 showBanner(lang === 'uk' ? "Будь ласка, введіть номер телефону." : "Please enter your phone number.");
@@ -477,7 +527,7 @@ document.addEventListener("DOMContentLoaded", () => {
             }
             if (phoneInput) phoneInput.classList.add('is-valid');
 
-            // Валідація пошти (необов'язкове поле — перевіряємо формат лише якщо заповнено)
+            // 5. Пошта — необов'язкове поле; перевіряємо формат лише якщо заповнено
             if (emailInput) emailInput.classList.remove('is-invalid', 'is-valid');
             if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
                 if (emailInput) emailInput.classList.add('is-invalid');
@@ -487,15 +537,17 @@ document.addEventListener("DOMContentLoaded", () => {
             }
             if (email && emailInput) emailInput.classList.add('is-valid');
 
-            // ВИДАЛЕНО ВАЛІДАЦІЮ ОБОВ'ЯЗКОВОСТІ НІКНЕЙМУ
+            // Нік месенджера необов'язковий — лише підсвічуємо, якщо заповнено
             if (isMessenger && mInput && mInput.value.trim().length > 0) {
                 mInput.classList.add('is-valid');
             }
 
+            // Блокуємо кнопку на час відправки
             const originalBtnText = submitBtn.innerText;
             submitBtn.innerText = lang === 'uk' ? "Відправляється..." : "Sending...";
             submitBtn.disabled = true;
 
+            // Формуємо тіло запиту; поле messenger залежить від вибору способу зв'язку
             const data = {
                 name,
                 phone: "+" + totalDigits,
@@ -511,6 +563,7 @@ document.addEventListener("DOMContentLoaded", () => {
             };
 
             try {
+                // Відправляємо заявку на сервер
                 const response = await fetch('/submit', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -520,20 +573,25 @@ document.addEventListener("DOMContentLoaded", () => {
                 const result = await response.json().catch(() => ({}));
 
                 if (response.ok) {
+                    // Успіх — тост, закриваємо й чистимо форму
                     showToast(lang === 'uk' ? "Заявку відправлено! Зв'яжуся з вами найближчим часом." : "Request sent! I'll get back to you shortly.", 'success');
                     bootstrap.Modal.getInstance(document.getElementById('contactModal')).hide();
                     document.getElementById('contactForm').reset();
                     if (mBlock) mBlock.style.display = 'none'; 
                     if (phoneInput && iti) phoneInput.value = "+" + iti.getSelectedCountryData().dialCode + " ";
                 } else if (response.status === 429) {
+                    // Забагато запитів — спрацював rate-limit на сервері
                     showToast(lang === 'uk' ? 'Забагато спроб. Спробуйте через 10 хвилин.' : 'Too many requests. Try again in 10 minutes.', 'limit');
                 } else {
+                    // Інша помилка від сервера
                     showToast(result.error || (lang === 'uk' ? 'Помилка при відправці. Спробуйте ще раз.' : 'Error while sending. Please try again.'), 'error');
                 }
             } catch (error) {
+                // Не вдалося з'єднатися з сервером
                 console.error('[FORM SUBMIT ERROR]', error);
                 showToast(lang === 'uk' ? "Не вдалося з'єднатися з сервером." : 'Could not connect to the server.', 'error');
             } finally {
+                // Повертаємо кнопку в робочий стан у будь-якому випадку
                 submitBtn.innerText = originalBtnText;
                 submitBtn.disabled = false;
             }
@@ -545,18 +603,22 @@ document.addEventListener("DOMContentLoaded", () => {
     const navbarNav  = document.getElementById('navbarNav');
 
     if (navbarNav && navOverlay) {
+        // Меню відкривається — показуємо затемнення й блокуємо скрол сторінки
         navbarNav.addEventListener('show.bs.collapse', () => {
             navOverlay.style.display = 'block';
             requestAnimationFrame(() => navOverlay.classList.add('show'));
             document.body.style.overflow = 'hidden';
         });
+        // Меню закривається — ховаємо затемнення (з затримкою на анімацію) і повертаємо скрол
         navbarNav.addEventListener('hide.bs.collapse', () => {
             navOverlay.classList.remove('show');
             setTimeout(() => { navOverlay.style.display = 'none'; }, 350);
             document.body.style.overflow = '';
         });
+        // Клік по затемненню або хрестику закриває меню
         navOverlay.addEventListener('click', () => { bootstrap.Collapse.getInstance(navbarNav)?.hide(); });
         document.getElementById('drawerClose')?.addEventListener('click', () => { bootstrap.Collapse.getInstance(navbarNav)?.hide(); });
+        // Клік по будь-якому пункту меню теж закриває його
         document.querySelectorAll('#navbarNav .nav-link').forEach(link => {
             link.addEventListener('click', () => { bootstrap.Collapse.getInstance(navbarNav)?.hide(); });
         });
@@ -567,17 +629,19 @@ document.addEventListener("DOMContentLoaded", () => {
     const charCounter = document.getElementById('charCounter');
     const MAX_CHARS  = 500;
 
+    // Лічильник «N / 500» під полем повідомлення + колір при наближенні/досягненні ліміту
     if (msgInput && charCounter) {
         msgInput.addEventListener('input', () => {
             const len = msgInput.value.length;
             charCounter.textContent = `${len} / ${MAX_CHARS}`;
             charCounter.className = 'char-counter';
-            if (len >= MAX_CHARS)       charCounter.classList.add('limit');
-            else if (len >= MAX_CHARS * 0.8) charCounter.classList.add('warn');
+            if (len >= MAX_CHARS)       charCounter.classList.add('limit');     // досягнуто ліміт
+            else if (len >= MAX_CHARS * 0.8) charCounter.classList.add('warn'); // близько до ліміту (80%)
         });
     }
 
     // --- ОЧИЩЕННЯ ФОРМИ ПРИ ЗАКРИТТІ МОДАЛКИ ---
+    // При закритті модалки контактів скидаємо поля, стани валідації та лічильник
     document.getElementById('contactModal')?.addEventListener('hidden.bs.modal', () => {
         document.getElementById('contactForm').reset();
         if (mBlock) mBlock.style.display = 'none';
@@ -597,13 +661,13 @@ document.addEventListener("DOMContentLoaded", () => {
             const body = item.querySelector('.v-acc-body');
             const isOpen = item.classList.contains('is-open');
 
-            // Закрити всі
+            // Спочатку закриваємо всі пункти (режим «один відкритий»)
             document.querySelectorAll('#servAccordion .v-acc-item').forEach(i => {
                 i.classList.remove('is-open');
                 i.querySelector('.v-acc-body').style.maxHeight = null;
             });
 
-            // Відкрити поточний, якщо був закритий
+            // Якщо клікнутий пункт був закритий — відкриваємо його (max-height = реальна висота)
             if (!isOpen) {
                 item.classList.add('is-open', 'was-viewed');
                 body.style.maxHeight = body.scrollHeight + 'px';
@@ -612,11 +676,12 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
     // --- SCROLL-АНІМАЦІЇ (IntersectionObserver) ---
+    // Додає клас .visible, коли елемент .reveal з'являється в зоні видимості
     const revealObserver = new IntersectionObserver((entries) => {
         entries.forEach(entry => {
             if (entry.isIntersecting) {
                 entry.target.classList.add('visible');
-                revealObserver.unobserve(entry.target);
+                revealObserver.unobserve(entry.target);   // анімуємо лише один раз
             }
         });
     }, { threshold: 0.12 });
@@ -638,6 +703,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const navLinks = document.querySelectorAll('.nav-link[href^="#"]');
     const sectionTitles = { 'portfolio': 'Portfolio', 'about': 'About', 'services': 'Services', 'process': 'Process', 'contact': 'Contact' };
 
+    // Підсвічує пункт меню активної секції + оновлює <title> вкладки
     const navObserver = new IntersectionObserver((entries) => {
         entries.forEach(entry => {
             if (entry.isIntersecting) {
@@ -656,22 +722,27 @@ document.addEventListener("DOMContentLoaded", () => {
     const card = document.getElementById('businessCard');
     if (card) {
         if ('ontouchstart' in window) {
+            // На тач-пристроях нахил неможливий — вмикаємо просто «плавання»
             card.style.animation = 'float 5s ease-in-out infinite';
         } else {
+            // На десктопі — нахил картки за курсором миші
             card.addEventListener('mousemove', (e) => {
                 card.classList.add('is-tilting');
+                // Рахуємо зміщення курсора від центру картки (-1..1 по кожній осі)
                 const rect = card.getBoundingClientRect();
                 const cx = rect.left + rect.width / 2;
                 const cy = rect.top + rect.height / 2;
                 const dx = (e.clientX - cx) / (rect.width / 2);   
                 const dy = (e.clientY - cy) / (rect.height / 2);  
-                const tiltX = -dy * 14;   
-                const tiltY =  dx * 14;   
-                const lift = 28 + Math.abs(dx * 8) + Math.abs(dy * 8);
+                const tiltX = -dy * 14;   // нахил по X залежить від вертикалі
+                const tiltY =  dx * 14;   // нахил по Y залежить від горизонталі
+                const lift = 28 + Math.abs(dx * 8) + Math.abs(dy * 8);   // «підйом» тіні
 
+                // Застосовуємо 3D-поворот і динамічну тінь
                 card.style.transform = `rotateX(${tiltX}deg) rotateY(${tiltY}deg) translateZ(20px)`;
                 card.style.boxShadow = `${-dx*20}px ${-dy*20 + lift}px 60px rgba(0,0,0,0.35), 0 8px 20px rgba(0,0,0,0.2)`;
 
+                // Переміщуємо відблиск услід за курсором (координати у відсотках)
                 const px = ((e.clientX - rect.left) / rect.width) * 100;
                 const py = ((e.clientY - rect.top) / rect.height) * 100;
                 card.style.setProperty('--shine-x', px + '%');
@@ -679,6 +750,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 card.style.backgroundImage = `radial-gradient(circle at ${px}% ${py}%, #1a1a1a 0%, #000 60%)`;
             });
 
+            // Курсор пішов з картки — повертаємо все у вихідний стан
             card.addEventListener('mouseleave', () => {
                 card.classList.remove('is-tilting');
                 card.style.transform = '';
@@ -689,15 +761,18 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     // --- НАВІГАЦІЯ СТРІЛКАМИ В МОДАЛЦІ КЛІЄНТА ---
+    // Порядок полів для переходу стрілками ↑/↓
     const formFields = ['userName', 'userPhone', 'userEmail', 'userMessage', 'messengerNick'];
     document.getElementById('contactModal')?.addEventListener('keydown', (e) => {
         const active = document.activeElement;
         const idx = formFields.indexOf(active.id);
 
+        // Enter (не на кнопці/textarea) — одразу відправляє форму
         if (e.key === 'Enter' && active.tagName !== 'BUTTON' && active.tagName !== 'TEXTAREA') {
             e.preventDefault();
             document.getElementById('submitForm').click();
         }
+        // ↓ — фокус на наступне видиме поле
         if (e.key === 'ArrowDown' && idx !== -1) {
             e.preventDefault();
             for (let i = idx + 1; i < formFields.length; i++) {
@@ -705,6 +780,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 if (next && next.offsetParent !== null) { next.focus(); break; }
             }
         }
+        // ↑ — фокус на попереднє видиме поле
         if (e.key === 'ArrowUp' && idx !== -1) {
             e.preventDefault();
             for (let i = idx - 1; i >= 0; i--) {

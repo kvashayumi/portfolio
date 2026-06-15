@@ -1,15 +1,22 @@
-/* --- ОСНОВНІ СТИЛІ --- */
+/* =====================================================
+   ОСНОВНІ СТИЛІ
+   Глобальні налаштування: змінні, html, body, секції
+   ===================================================== */
+
+/* Глобальні CSS-змінні: акцентний колір і приглушений текст */
 :root { 
     --accent: #000; 
     --text-muted: #666; 
 }
 
+/* Прибираємо горизонтальний скрол і сіру підсвітку тапу на мобільних */
 html {
     overflow-x: hidden;
     max-width: 100%;
     -webkit-tap-highlight-color: transparent;
 }
 
+/* Базова типографіка, кольори, плавний скрол і згладжування шрифту */
 body { 
     font-family: 'Inter', sans-serif; 
     color: #000; 
@@ -21,17 +28,23 @@ body {
     -moz-osx-font-smoothing: grayscale;
 }
 
+/* Стандартний вертикальний відступ для секцій сторінки */
 .section-padding { 
     padding: 100px 0; 
 }
 
-/* --- Навігація --- */
+/* =====================================================
+   НАВІГАЦІЯ (хедер + мобільне меню)
+   ===================================================== */
+
+/* Фіксована верхня панель */
 .navbar { 
     height: 80px; 
     transition: 0.3s; 
     z-index: 1050; 
 }
 
+/* Затемнений фон під меню, коли відкрите мобільне меню */
 .nav-overlay {
     display: none;
     position: fixed;
@@ -44,10 +57,12 @@ body {
     opacity: 0;
     transition: opacity 0.35s ease;
 }
+/* Плавна поява затемнення */
 .nav-overlay.show {
     opacity: 1;
 }
 
+/* Бокова панель мобільного меню (виїжджає справа) */
 .navbar-collapse {
     position: fixed !important;
     top: 80px !important;
@@ -62,22 +77,26 @@ body {
     justify-content: center !important;
     padding: 40px 36px !important;
     z-index: 1040 !important;
-    transform: translateX(100%) !important;
+    transform: translateX(100%) !important;   /* за замовчуванням сховане за межами екрана */
     transition: transform 0.35s ease !important;
     box-shadow: -8px 0 32px rgba(0,0,0,0.12);
 }
 
+/* Виїзд меню на екран */
 .navbar-collapse.show {
     transform: translateX(0) !important;
 }
 
+/* --- Поведінка мобільного меню (≤991px) --- */
 @media (max-width: 991px) {
+    /* Пункти меню — стовпчиком */
     .navbar-collapse .navbar-nav {
         flex-direction: column !important;
         align-items: flex-start !important;
         width: 100%;
     }
 
+    /* Великі посилання меню, стартовий (прихований) стан для анімації */
     .navbar-collapse .nav-link {
         font-size: 1.5rem !important;
         font-weight: 700 !important;
@@ -89,18 +108,22 @@ body {
         transition: opacity 0.3s ease, transform 0.3s ease;
     }
 
+    /* Поява посилань, коли меню відкрите */
     .navbar-collapse.show .nav-link {
         opacity: 1 !important;
         transform: translateX(0) !important;
     }
 
+    /* Каскадна затримка — пункти з'являються один за одним */
     .navbar-collapse.show li:nth-child(1) .nav-link { transition-delay: 0.08s; }
     .navbar-collapse.show li:nth-child(2) .nav-link { transition-delay: 0.13s; }
     .navbar-collapse.show li:nth-child(3) .nav-link { transition-delay: 0.18s; }
     .navbar-collapse.show li:nth-child(4) .nav-link { transition-delay: 0.23s; }
 
+    /* Підсвічування пункту при наведенні */
     .navbar-collapse .nav-link:hover { opacity: 0.4 !important; }
 
+    /* Блок перемикача мови — відокремлений рискою зверху */
     .navbar-collapse .ms-lg-4 {
         margin-top: 32px !important;
         padding-top: 24px !important;
@@ -108,6 +131,7 @@ body {
         width: 100% !important;
     }
 
+    /* Кнопка зміни мови в мобільному меню */
     .navbar-collapse .btn-lang {
         color: #000 !important;
         font-size: 14px !important;
@@ -118,11 +142,14 @@ body {
         background: none !important;
     }
 
+    /* Активна мова при наведенні */
     .navbar-collapse .btn-lang:hover { opacity: 1 !important; }
 }
 
+/* Навбар завжди поверх інших елементів */
 .navbar { z-index: 1050 !important; }
 
+/* Посилання навігації (десктоп) */
 .nav-link { 
     font-weight: 500; 
     font-size: 15px; 
@@ -131,10 +158,12 @@ body {
     transition: opacity 0.3s ease; 
 }
 
+/* Притлумлення посилання при наведенні */
 .nav-link:hover { 
     opacity: 0.5; 
 }
 
+/* Кнопка перемикання мови (десктоп) */
 .btn-lang { 
     background: none; 
     border: none; 
@@ -143,6 +172,7 @@ body {
     cursor: pointer; 
 }
 
+/* «Бургер» — кнопка відкриття мобільного меню */
 .navbar-toggler {
     padding: 0;
     width: 24px;
@@ -158,11 +188,13 @@ body {
     justify-content: space-between;
     flex-shrink: 0;
 }
+/* Прибираємо рамку фокуса на бургері */
 .navbar-toggler:focus {
     box-shadow: none !important;
     outline: none !important;
 }
 
+/* Три смужки всередині бургера */
 .navbar-toggler span {
     display: block;
     width: 100%;
@@ -173,18 +205,23 @@ body {
     transition: transform 0.3s ease, opacity 0.3s ease, width 0.3s ease;
 }
 
+/* Анімація бургера в «хрестик», коли меню відкрите */
 .navbar-toggler:not(.collapsed) span:nth-child(1) {
     transform: translateY(8px) rotate(45deg);
 }
 .navbar-toggler:not(.collapsed) span:nth-child(2) {
-    opacity: 0;
+    opacity: 0;        /* середня смужка зникає */
     width: 0;
 }
 .navbar-toggler:not(.collapsed) span:nth-child(3) {
     transform: translateY(-8px) rotate(-45deg);
 }
 
-/* --- Hero Секція --- */
+/* =====================================================
+   HERO-СЕКЦІЯ (перший екран)
+   ===================================================== */
+
+/* Контейнер hero на всю висоту екрана */
 .hero { 
     min-height: 100vh; 
     position: relative; 
@@ -193,6 +230,7 @@ body {
     padding: 120px 0 60px 0; 
 }
 
+/* Canvas з анімованими лініями (фон справа), з градієнтним згасанням зліва */
 #linesCanvas { 
     position: absolute; 
     right: 0; 
@@ -200,19 +238,24 @@ body {
     height: 100%; 
     width: 55%; 
     opacity: 0.3; 
-    pointer-events: none; 
+    pointer-events: none;   /* не перехоплює кліки */
     z-index: 0;
     overflow: hidden; 
     -webkit-mask-image: linear-gradient(to right, transparent, black 15%);
     mask-image: linear-gradient(to right, transparent, black 15%);
 }
 
+/* Текстовий контент hero — поверх canvas */
 .hero-content { 
     position: relative; 
     z-index: 1; 
 }
 
-/* --- ЖИВА 3D ВІЗИТКА --- */
+/* =====================================================
+   ЖИВА 3D-ВІЗИТКА (нахил за курсором)
+   ===================================================== */
+
+/* Сцена з перспективою для 3D-ефекту */
 .card-scene {
     width: 100%;
     max-width: 420px;
@@ -220,6 +263,7 @@ body {
     perspective: 1100px;
 }
 
+/* Сама картка візитки */
 .business-card {
     position: relative;
     width: 100%;
@@ -233,12 +277,12 @@ body {
     will-change: transform;
 }
 
-/* script.js drops the transform transition while tracking the cursor (1:1 tilt) */
+/* Під час стеження за курсором script.js прибирає плавність нахилу (рух 1:1) */
 .business-card.is-tilting {
     transition: box-shadow 0.1s ease;
 }
 
-/* cursor-tracked shine — uses --shine-x / --shine-y set by script.js */
+/* Відблиск, що йде за курсором — координати --shine-x/--shine-y задає script.js */
 .business-card::after {
     content: '';
     position: absolute;
@@ -249,8 +293,10 @@ body {
     transition: opacity 0.25s ease;
     pointer-events: none;
 }
+/* Показуємо відблиск під час нахилу */
 .business-card.is-tilting::after { opacity: 1; }
 
+/* Аватар/лого на візитці (трохи піднятий у 3D) */
 .business-card img,
 .card-avatar {
     display: block;
@@ -262,11 +308,13 @@ body {
     transform: translateZ(40px);
 }
 
+/* Блок з інформацією на візитці */
 .card-info {
     width: 100%;
     transform: translateZ(30px);
 }
 
+/* Ім'я на візитці */
 .card-name {
     font-size: 1.4rem;
     font-weight: 800;
@@ -274,18 +322,21 @@ body {
     margin-bottom: 4px;
 }
 
+/* Посада/роль на візитці */
 .card-role {
     margin-bottom: 1.3rem;
     color: rgba(255, 255, 255, 0.6);
     font-size: 0.95rem;
 }
 
+/* Список контактів на візитці */
 .card-contacts {
     display: flex;
     flex-direction: column;
     gap: 0.55rem;
 }
 
+/* Окреме контактне посилання (іконка + текст) */
 .card-contact-link {
     display: flex;
     align-items: center;
@@ -294,12 +345,14 @@ body {
     font-size: 0.95rem;
 }
 
+/* Ряд іконок соцмереж на візитці */
 .card-socials {
     display: flex;
     gap: 0.6rem;
     margin-top: 1.3rem;
 }
 
+/* Кругла кнопка соцмережі */
 .card-social-link {
     display: grid;
     place-items: center;
@@ -312,18 +365,24 @@ body {
     border: 1px solid rgba(255, 255, 255, 0.12);
     transition: background 0.25s ease, color 0.25s ease, transform 0.25s ease;
 }
+/* Інверсія кольорів + підйом при наведенні */
 .card-social-link:hover {
     background: #fff;
     color: #000;
     transform: translateY(-3px);
 }
 
+/* Анімація «плавання» (легке погойдування вгору-вниз) */
 @keyframes float {
     0%, 100% { transform: translateY(0); }
     50%      { transform: translateY(-12px); }
 }
 
-/* --- Дизайн элементов --- */
+/* =====================================================
+   ДИЗАЙН ЕЛЕМЕНТІВ (кнопки, зображення, бейджі)
+   ===================================================== */
+
+/* Основна чорна кнопка */
 .btn-dark { 
     background: #000; 
     border: none; 
@@ -333,17 +392,20 @@ body {
     transition: 0.3s; 
 }
 
+/* Стан кнопки при наведенні (світліша + підйом) */
 .btn-dark:hover { 
     background: #333; 
     transform: translateY(-3px); 
 }
 
+/* Зображення в портфоліо (обрізане під фіксовану висоту) */
 .portfolio-img { 
     width: 100%; 
     height: 280px; 
     object-fit: cover; 
 }
 
+/* Сірий бейдж/мітка (наприклад, технологія) */
 .badge { 
     border-radius: 2px; 
     border: none; 
@@ -355,20 +417,27 @@ body {
     letter-spacing: 0.1px;
 }
 
-/* --- ВЕРТИКАЛЬНИЙ АКОРДЕОН (БІЛИЙ ДИЗАЙН) --- */
+/* =====================================================
+   ВЕРТИКАЛЬНИЙ АКОРДЕОН (білий дизайн)
+   ===================================================== */
+
+/* Контейнер акордеону */
 .v-accordion {
     width: 100%;
     margin-top: 48px;
 }
 
+/* Окремий пункт — розділений лінією зверху */
 .v-acc-item {
     border-top: 1.5px solid #ebebeb;
 }
 
+/* Лінія знизу для останнього пункту */
 .v-acc-item:last-child {
     border-bottom: 1.5px solid #ebebeb;
 }
 
+/* Шапка пункту, на яку клікають */
 .v-acc-head {
     display: flex;
     align-items: center;
@@ -379,10 +448,12 @@ body {
     -webkit-user-select: none;
 }
 
+/* Притлумлення заголовка при наведенні на шапку */
 .v-acc-head:hover .v-acc-title {
     opacity: 0.45;
 }
 
+/* Порядковий номер пункту (01, 02…) */
 .v-acc-num {
     font-size: 11px;
     font-weight: 600;
@@ -394,10 +465,12 @@ body {
     transition: color 0.3s ease;
 }
 
+/* Номер темнішає, коли пункт відкритий */
 .v-acc-item.is-open .v-acc-num {
     color: #111;
 }
 
+/* Заголовок пункту */
 .v-acc-title {
     font-size: 18px;
     font-weight: 800;
@@ -408,6 +481,7 @@ body {
     transition: opacity 0.25s ease;
 }
 
+/* Бейдж з часом/тривалістю біля пункту */
 .v-acc-time-badge {
     display: inline-flex;
     align-items: center;
@@ -423,12 +497,14 @@ body {
     transition: border-color 0.35s ease, color 0.35s ease, background 0.35s ease;
 }
 
+/* Підсвічування бейджа часу у відкритому пункті */
 .v-acc-item.is-open .v-acc-time-badge {
     border-color: #111;
     color: #111;
     background: #f8f8f8;
 }
 
+/* Кругла кнопка «+» для розгортання пункту */
 .v-acc-toggle {
     width: 34px;
     height: 34px;
@@ -443,6 +519,7 @@ body {
     color: #111;
 }
 
+/* «+» стає «×» (поворот) і чорнішає у відкритому пункті */
 .v-acc-item.is-open .v-acc-toggle {
     background: #111;
     color: #fff;
@@ -450,16 +527,19 @@ body {
     transform: rotate(45deg);
 }
 
+/* Тіло пункту — згорнуте за замовчуванням, розгортається через max-height */
 .v-acc-body {
     max-height: 0;
     overflow: hidden;
     transition: max-height 0.6s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
+/* Внутрішні відступи тексту в тілі пункту */
 .v-acc-body-inner {
     padding: 0 80px 36px 62px;
 }
 
+/* Опис усередині пункту */
 .v-acc-desc {
     font-size: 15px;
     line-height: 1.8;
@@ -467,6 +547,7 @@ body {
     max-width: 620px;
 }
 
+/* Акордеон на планшетах (≤768px) — компактніше, бейдж часу ховаємо */
 @media (max-width: 768px) {
     .v-acc-head { padding: 22px 0; gap: 14px; }
     .v-acc-num { min-width: 36px; font-size: 10px; }
@@ -476,32 +557,23 @@ body {
     .v-acc-body-inner { padding: 0 0 28px 50px; }
 }
 
+/* Акордеон на телефонах (≤480px) — мінімальні відступи */
 @media (max-width: 480px) {
     .v-acc-title { font-size: 12.5px; letter-spacing: 0; }
     .v-acc-body-inner { padding: 0 0 24px 0; }
     .v-acc-desc { font-size: 14px; }
 }
 
-/* Переглянутий пункт акордеону */
-.v-acc-item.was-viewed:not(.is-open) {
-    background: #f7f7f7;
-}
-.v-acc-item.was-viewed:not(.is-open) .v-acc-num {
-    color: #d8d8d8;
-}
+/* Уже переглянутий (але закритий) пункт — приглушений заголовок */
 .v-acc-item.was-viewed:not(.is-open) .v-acc-title {
-    color: #888;
-}
-.v-acc-item.was-viewed:not(.is-open) .v-acc-time-badge {
-    color: #ccc;
-    border-color: #eee;
-}
-.v-acc-item.was-viewed:not(.is-open) .v-acc-toggle {
-    border-color: #ddd;
-    color: #bbb;
+    color: #999;
 }
 
-/* --- ОБНОВЛЕННАЯ СТИЛЬНАЯ ВРЕМЕННАЯ ШКАЛА (TIMELINE) --- */
+/* =====================================================
+   ЧАСОВА ШКАЛА / ПРОЦЕС (темна секція)
+   ===================================================== */
+
+/* Чорна секція процесу */
 .process-section {
     background: #000;
     color: #fff;
@@ -509,6 +581,7 @@ body {
     overflow-x: hidden; /* усуває білу смугу на мобільних */
 }
 
+/* Контейнер таймлайну з вертикальною пунктирною лінією зліва */
 .timeline-container {
     position: relative;
     padding-left: 35px;
@@ -516,15 +589,18 @@ body {
     border-left: 2px dashed rgba(255, 255, 255, 0.15);
 }
 
+/* Окремий крок таймлайну */
 .timeline-item {
     position: relative;
     margin-bottom: 40px;
 }
 
+/* Прибираємо відступ під останнім кроком */
 .timeline-item:last-child {
     margin-bottom: 0;
 }
 
+/* Крапка-маркер на лінії */
 .timeline-dot {
     position: absolute;
     left: -46px;
@@ -538,14 +614,14 @@ body {
     transition: background-color 0.5s ease, transform 0.3s ease, border-color 0.5s ease, box-shadow 0.5s ease;
 }
 
+/* Активна крапка (при появі) — заповнюється і світиться */
 .timeline-item.animated .timeline-dot {
     background: #fff;
     border-color: #fff;
     box-shadow: 0 0 14px rgba(255,255,255,0.55);
 }
 
-
-
+/* Картка-вміст кроку */
 .timeline-content {
     background: rgba(255, 255, 255, 0.03);
     border: 1px solid rgba(255, 255, 255, 0.08);
@@ -555,6 +631,7 @@ body {
     cursor: default;
 }
 
+/* Бейдж часу всередині кроку */
 .timeline-time-badge {
     display: inline-flex;
     align-items: center;
@@ -572,7 +649,7 @@ body {
     overflow: hidden;
 }
 
-/* Прогрес-бар що заповнюється при появі */
+/* Прогрес-бар, що заповнює бейдж при появі кроку */
 .timeline-time-badge::before {
     content: '';
     position: absolute;
@@ -582,15 +659,18 @@ body {
     transition: width 1.6s cubic-bezier(0.16, 1, 0.3, 1) 0.2s;
 }
 
+/* Запуск заповнення прогрес-бара (ширина з --progress) */
 .timeline-item.animated .timeline-time-badge::before {
     width: var(--progress, 20%);
 }
 
+/* Іконка в бейджі часу */
 .timeline-time-badge i {
     font-size: 11px;
     opacity: 0.6;
 }
 
+/* Заголовок кроку */
 .timeline-title {
     font-size: 20px;
     font-weight: 700;
@@ -598,6 +678,7 @@ body {
     letter-spacing: -0.3px;
 }
 
+/* Опис кроку */
 .timeline-desc {
     font-size: 14px;
     color: rgba(255, 255, 255, 0.65);
@@ -605,7 +686,11 @@ body {
     margin: 0;
 }
 
-/* --- Модальное окно --- */
+/* =====================================================
+   МОДАЛЬНЕ ВІКНО (форма заявки)
+   ===================================================== */
+
+/* Вміст модалки */
 .modal-content { 
     border-radius: 0; 
     border: none; 
@@ -613,6 +698,7 @@ body {
     box-shadow: 0 10px 40px rgba(0,0,0,0.1); 
 }
 
+/* Поле вводу форми */
 .form-control { 
     border-radius: 0 !important; 
     border: none !important;
@@ -622,6 +708,7 @@ body {
     transition: box-shadow 0.15s ease-in-out;
 }
 
+/* Активне поле (у фокусі) — чорна рамка, білий фон */
 .form-control:focus {
     border: 1px solid #000 !important;
     box-shadow: none !important;
@@ -629,16 +716,19 @@ body {
     outline: none !important;
 }
 
+/* Позначений чекбокс — чорний */
 .form-check-input:checked { 
     background-color: #000; 
     border-color: #000; 
 }
 
+/* Чекбокс у фокусі */
 .form-check-input:focus {
     border-color: #000 !important;
     box-shadow: 0 0 0 0.2rem rgba(0, 0, 0, 0.15) !important;
 }
 
+/* Лічильник символів під полем */
 .char-counter {
     font-size: 12px;
     color: #aaa;
@@ -646,9 +736,10 @@ body {
     margin-top: 4px;
     transition: color 0.2s ease;
 }
-.char-counter.warn  { color: #cc9900; }
-.char-counter.limit { color: #cc0000; }
+.char-counter.warn  { color: #cc9900; }   /* наближення до ліміту */
+.char-counter.limit { color: #cc0000; }   /* досягнуто ліміт */
 
+/* Кнопка відправки форми */
 #submitForm {
     padding: 10px 28px; 
     font-size: 14px;
@@ -657,23 +748,30 @@ body {
     transition: 0.2s ease-in-out;
 }
 
+/* Неактивна кнопка відправки (заблокована) */
 #submitForm:disabled {
     background-color: #666;
     cursor: not-allowed;
     transform: none;
 }
 
-/* --- INTL-TEL-INPUT МОДИФИКАЦИИ --- */
+/* =====================================================
+   INTL-TEL-INPUT (поле телефону з вибором країни)
+   ===================================================== */
+
+/* Обгортка плагіна — на всю ширину */
 .iti { 
     display: block !important; 
     width: 100% !important;
     margin-bottom: 1rem;
 }
 
+/* Відступ під прапор країни в полі телефону */
 #userPhone {
     padding-left: 52px !important;
 }
 
+/* Випадаючий список країн */
 .iti__country-list {
     position: fixed !important;
     overflow-y: auto !important;
@@ -687,6 +785,7 @@ body {
     border-radius: 0 !important;
 }
 
+/* Рядок країни у списку */
 .iti__country {
     padding: 10px 15px !important;
     display: flex !important;
@@ -695,28 +794,36 @@ body {
     background: #ffffff !important;
 }
 
+/* Підсвічування країни при наведенні */
 .iti__country:hover {
     background: #f5f5f5 !important;
 }
 
+/* Назва країни */
 .iti__country-name {
     font-size: 14px !important;
     color: #000 !important;
     font-weight: 400 !important;
 }
 
+/* Код країни (+380 тощо) — притиснутий праворуч */
 .iti__dial-code {
     font-size: 14px !important;
     color: #666 !important;
     margin-left: auto !important;
 }
 
-/* --- Блок мессенджеров --- */
+/* =====================================================
+   БЛОК МЕСЕНДЖЕРІВ (вибір способу зв'язку)
+   ===================================================== */
+
+/* Прихований блок, з'являється при виборі месенджера */
 #messengerBlock { 
     display: none; 
     margin-top: 15px; 
 }
 
+/* Кнопка месенджера */
 .msg-btn { 
     border: 1px solid #ccc; 
     background: #fff; 
@@ -726,12 +833,14 @@ body {
     transition: 0.2s; 
 }
 
+/* Активна (вибрана) кнопка месенджера */
 .msg-btn.active { 
     background: #000; 
     color: #fff; 
     border-color: #000; 
 }
 
+/* Іконка контакту (соцмережі/телефон у секції контактів) */
 .contact-icon { 
     font-size: 30px; 
     color: #000; 
@@ -740,27 +849,36 @@ body {
     display: inline-block; 
 }
 
+/* Іконка контакту при наведенні (сіра + збільшення) */
 .contact-icon:hover { 
     color: #666; 
     transform: scale(1.1); 
 }
 
+/* =====================================================
+   ПОРТФОЛІО (картки робіт + модалка проєкту)
+   ===================================================== */
+
+/* Анімація появи з підйомом знизу */
 @keyframes fadeSlideUp {
     from { opacity: 0; transform: translateY(24px); }
     to   { opacity: 1; transform: translateY(0); }
 }
 
+/* Картка роботи — з'являється з анімацією */
 .portfolio-item {
     opacity: 0;
     animation: fadeSlideUp 0.45s ease forwards;
 }
 
+/* Контейнер тегів проєкту */
 .project-tags {
     display: flex;
     flex-wrap: wrap;
     gap: 8px;
 }
 
+/* Окремий тег проєкту */
 .project-tag {
     font-size: 11.5px;
     padding: 3px 10px;
@@ -772,6 +890,7 @@ body {
     letter-spacing: 0.1px;
 }
 
+/* Футер модалки проєкту (стрілки навігації) */
 .project-modal-footer {
     padding: 20px 28px 28px;
     display: flex;
@@ -781,6 +900,7 @@ body {
     flex-shrink: 0;
 }
 
+/* Кнопка-стрілка «попередній/наступний» проєкт */
 .project-nav-btn {
     background: none;
     border: none;
@@ -793,18 +913,20 @@ body {
     flex-shrink: 0;
 }
 
+/* Стрілка при наведенні */
 .project-nav-btn:hover { opacity: 0.4; }
 
-/* Стрілка неактивна — прозора, некликабельна */
+/* Неактивна стрілка — прозора й некликабельна */
 .project-nav-btn.nav-hidden {
     opacity: 0;
     pointer-events: none;
     cursor: default;
 }
 
+/* Картка портфоліо — клікабельна */
 .portfolio-card { cursor: pointer; }
 
-/* Усунення 300ms затримки тапу на iOS/Android */
+/* Усунення затримки тапу 300мс на iOS/Android */
 button, a, [tabindex="0"],
 .v-acc-head, .navbar-toggler,
 .portfolio-card, .project-nav-btn,
@@ -812,7 +934,7 @@ button, a, [tabindex="0"],
     touch-action: manipulation;
 }
 
-/* Мінімальна висота touch-target для іконок контактів */
+/* Мінімальний розмір зони натискання для іконок контактів (зручність на тач-екранах) */
 .contact-icon {
     min-height: 44px;
     min-width: 44px;
@@ -821,24 +943,26 @@ button, a, [tabindex="0"],
     justify-content: center;
 }
 
-/* --- Project Modal — однаковий розмір для всіх карточок --- */
+/* --- Модалка проєкту: однаковий розмір для всіх карток --- */
 #projectModal .modal-content {
     overflow: hidden;
 }
 
-/* Фіксована висота — однакова для всіх */
+/* Фіксована висота рядка — однакова для всіх проєктів */
 #projectModal .row.g-0 {
     height: 480px;
     min-height: 480px;
     max-height: 480px;
 }
 
+/* Ліва колонка із зображенням */
 #projectModal .col-lg-6:first-child {
     overflow: hidden;
     height: 100%;
     flex-shrink: 0;
 }
 
+/* Зображення проєкту — заповнює колонку */
 #pmImg {
     width: 100%;
     height: 100%;
@@ -847,24 +971,26 @@ button, a, [tabindex="0"],
     display: block;
 }
 
+/* Права колонка з текстом */
 #projectModal .col-lg-6.d-flex {
     overflow: hidden;
     height: 100%;
     min-height: 0;
 }
 
-/* Текст сколиться всередині, футер завжди видно */
+/* Текст скролиться всередині, футер завжди видно */
 #projectModal .col-lg-6.d-flex > div:first-child {
     flex: 1 1 0;
     min-height: 0;
     overflow-y: auto;
 }
 
+/* Футер модалки не стискається */
 .project-modal-footer {
     flex-shrink: 0;
 }
 
-/* Планшет і нижче — фіксована карточка однакового розміру */
+/* Модалка проєкту на планшетах (≤991px) — колонки стають у стовпчик */
 @media (max-width: 991px) {
     #projectModal .modal-dialog {
         max-width: 88vw;
@@ -883,7 +1009,7 @@ button, a, [tabindex="0"],
         width: 100% !important;
         max-width: 100% !important;
     }
-    /* Зображення — фіксована частина */
+    /* Зображення — фіксована висота зверху */
     #projectModal .col-lg-6:first-child {
         height: 210px !important;
         min-height: 210px !important;
@@ -897,7 +1023,7 @@ button, a, [tabindex="0"],
         object-fit: cover;
         display: block;
     }
-    /* Текстова частина займає решту */
+    /* Текстова частина займає решту висоти */
     #projectModal .col-lg-6.d-flex {
         flex: 1 1 0 !important;
         min-height: 0 !important;
@@ -929,6 +1055,7 @@ button, a, [tabindex="0"],
     }
 }
 
+/* Модалка проєкту на телефонах (≤575px) — менші зображення */
 @media (max-width: 575px) {
     #projectModal .modal-dialog {
         max-width: 94vw;
@@ -949,7 +1076,11 @@ button, a, [tabindex="0"],
     }
 }
 
-/* --- Toast уведомления --- */
+/* =====================================================
+   TOAST-СПОВІЩЕННЯ (старий набір стилів)
+   ===================================================== */
+
+/* Контейнер тостів у правому нижньому куті */
 #toastContainer {
     position: fixed;
     bottom: 28px;
@@ -960,6 +1091,7 @@ button, a, [tabindex="0"],
     gap: 10px;
 }
 
+/* Окреме сповіщення */
 .toast-item {
     background: #000;
     color: #fff;
@@ -974,17 +1106,23 @@ button, a, [tabindex="0"],
     transition: opacity 0.3s, transform 0.3s;
 }
 
+/* Анімація появи тоста */
 @keyframes toastIn {
     from { opacity: 0; transform: translateY(20px); }
     to   { opacity: 1; transform: translateY(0); }
 }
 
-/* --- About photo placeholder --- */
+/* =====================================================
+   ЗАГЛУШКА ФОТО В СЕКЦІЇ «ПРО МЕНЕ»
+   ===================================================== */
+
+/* Обгортка фото */
 .about-photo-wrap {
     width: 100%;
     max-width: 340px;
 }
 
+/* Сірий плейсхолдер замість фото (співвідношення 3:4) */
 .about-photo-placeholder {
     width: 100%;
     aspect-ratio: 3/4;
@@ -999,10 +1137,12 @@ button, a, [tabindex="0"],
     overflow: hidden;
 }
 
+/* Іконка всередині плейсхолдера */
 .about-photo-placeholder svg {
     opacity: 0.5;
 }
 
+/* Підпис під плейсхолдером */
 .about-photo-label {
     font-size: 13px;
     font-weight: 600;
@@ -1011,14 +1151,18 @@ button, a, [tabindex="0"],
     text-transform: uppercase;
 }
 
-/* Fix hero button alignment */
+/* =====================================================
+   КНОПКИ HERO + ВАРІАНТ «КОНТУРНОЇ» КНОПКИ
+   ===================================================== */
+
+/* Вирівнювання вмісту кнопок у hero по центру */
 .hero .btn {
     display: inline-flex;
     align-items: center;
     justify-content: center;
 }
 
-/* Кнопка "Мої роботи" — стиль в тон з чорною */
+/* Кнопка «Мої роботи» — контурна, в тон чорної */
 .hero .btn-outline-dark,
 .btn-outline-dark {
     border-radius: 0 !important;
@@ -1029,6 +1173,7 @@ button, a, [tabindex="0"],
     transition: 0.3s;
     background: transparent;
 }
+/* При наведенні стає суцільною чорною з підйомом */
 .hero .btn-outline-dark:hover,
 .btn-outline-dark:hover {
     background: #000 !important;
@@ -1036,8 +1181,11 @@ button, a, [tabindex="0"],
     transform: translateY(-3px);
 }
 
-/* --- Мобільні виправлення кнопок --- */
+/* =====================================================
+   МОБІЛЬНІ ВИПРАВЛЕННЯ КНОПОК ТА МОДАЛОК (≤575px)
+   ===================================================== */
 @media (max-width: 575px) {
+    /* Кнопки hero — у стовпчик, на всю ширину */
     .hero .d-flex.gap-3 {
         flex-direction: column !important;
         gap: 12px !important;
@@ -1049,11 +1197,12 @@ button, a, [tabindex="0"],
         padding: 14px 20px !important;
     }
 
+    /* Менше фото в секції «Про мене» */
     .about-photo-wrap {
         max-width: 240px;
     }
 
-    /* Modal на мобільних */
+    /* Модалка на мобільних — менші відступи */
     .modal-content {
         padding: 16px !important;
     }
@@ -1062,22 +1211,25 @@ button, a, [tabindex="0"],
         margin: 8px !important;
     }
 
-    /* Кнопки месенджерів */
+    /* Кнопки месенджерів розтягуються рівномірно */
     .d-flex.gap-2 .msg-btn {
         flex: 1;
         text-align: center;
     }
 }
 
-/* Fix intl-tel-input on mobile */
+/* Список країн телефону на мобільних — нижчий */
 @media (max-width: 575px) {
     .iti__country-list {
         max-height: 180px !important;
     }
 }
 
+/* =====================================================
+   ВИПРАВЛЕННЯ ПОВЕДІНКИ BOOTSTRAP-МОДАЛКИ
+   ===================================================== */
 
-/* Фікс Bootstrap modal: сторінка не зсувається при відкритті */
+/* Сторінка не «сіпається» при відкритті модалки */
 body.modal-open {
     padding-right: 0 !important;
     overflow-y: hidden !important;
@@ -1087,17 +1239,24 @@ body.modal-open {
     padding-right: 0 !important;
 }
 
+/* =====================================================
+   АНІМАЦІЯ ПОЯВИ ПРИ СКРОЛІ + АКТИВНИЙ ПУНКТ МЕНЮ
+   ===================================================== */
+
+/* Елемент прихований, доки не з'явиться в зоні видимості */
 .reveal {
     opacity: 0;
     transform: translateY(32px);
     transition: opacity 0.65s ease, transform 0.65s ease;
 }
 
+/* Стан після появи (додає JS) */
 .reveal.visible {
     opacity: 1;
     transform: translateY(0);
 }
 
+/* Підсвічування пункту меню для активної секції */
 .nav-link.active-section {
     opacity: 1 !important;
     font-weight: 700 !important;
@@ -1105,8 +1264,13 @@ body.modal-open {
     padding-bottom: 2px;
 }
 
+/* =====================================================
+   ДЕСКТОПНА НАВІГАЦІЯ (≥992px) — скидаємо мобільні стилі
+   ===================================================== */
 @media (min-width: 992px) {
+    /* Затемнення не потрібне на десктопі */
     .nav-overlay { display: none !important; }
+    /* Меню стає звичайним горизонтальним рядком */
     .navbar-collapse {
         position: static !important;
         flex: 1 !important;
@@ -1126,6 +1290,7 @@ body.modal-open {
         align-items: center !important;
         gap: 0 !important;
     }
+    /* Звичайний розмір посилань на десктопі */
     .navbar-collapse .nav-link {
         font-size: 15px !important;
         font-weight: 500 !important;
@@ -1136,15 +1301,16 @@ body.modal-open {
         padding: 4px 0 !important;
     }
 }
+
 /* =====================================================
    АДАПТИВНІСТЬ — МОБІЛЬНІ ТА ПЛАНШЕТИ
    ===================================================== */
 
-/* Планшет (768px і нижче) */
+/* --- Планшет (≤768px) --- */
 @media (max-width: 768px) {
     .section-padding { padding: 60px 0; }
 
-    /* Hero */
+    /* Hero — менші відступи, текст по центру */
     .hero {
         padding: 100px 0 50px 0;
         text-align: center;
@@ -1152,18 +1318,18 @@ body.modal-open {
     .hero h1 { font-size: 2.2rem !important; }
     .hero .lead { font-size: 1rem; }
     .hero .btn-dark { display: inline-block !important; }
-    #linesCanvas { width: 100%; opacity: 0.08; }
+    #linesCanvas { width: 100%; opacity: 0.08; }   /* лінії на весь фон, ледь помітні */
 
-
-    /* Контакти */
+    /* Контакти — менші іконки */
     .contact-icon { font-size: 26px; margin-right: 18px; }
 }
 
-/* Мобільний (480px і нижче) */
+/* --- Мобільний (≤480px) --- */
 @media (max-width: 480px) {
     .section-padding { padding: 50px 0; }
     .hero { padding: 90px 0 40px 0; }
     .hero h1 { font-size: 1.75rem !important; }
+    /* Кнопка hero на всю ширину */
     .hero .btn-dark {
         display: block !important;
         width: 100%;
@@ -1171,22 +1337,23 @@ body.modal-open {
         padding: 14px 20px;
     }
 
+    /* Таймлайн — менші відступи */
     .timeline-container {
         margin-left: 0;
         padding-left: 26px;
     }
-    /* Вирівнюємо точку з лінією при зменшеному padding */
+    /* Вирівнюємо крапку з лінією при зменшеному padding */
     .timeline-dot { left: -35px; }
     .timeline-content { padding: 20px 16px; }
     .timeline-time-badge { font-size: 10px; letter-spacing: 0.8px; padding: 5px 10px; }
 
+    /* Нижчі зображення портфоліо */
     .portfolio-img { height: 200px; }
 
     #submitForm { width: 100%; }
     .modal-footer { padding-left: 16px; padding-right: 16px; }
 
-
-    /* Toast на повну ширину */
+    /* Тости на всю ширину екрана */
     #toastContainer {
         bottom: 16px;
         right: 16px;
@@ -1194,14 +1361,15 @@ body.modal-open {
     }
     .toast-msg { min-width: unset; max-width: 100%; }
 
-    /* Акордеон */
+    /* Акордеон — менший заголовок */
     .v-acc-title { font-size: 12.5px; }
 }
 
 /* =====================================================
-   LANDSCAPE MOBILE — горизонтальна орієнтація
+   LANDSCAPE MOBILE — горизонтальна орієнтація телефону
    ===================================================== */
 @media (max-height: 500px) and (orientation: landscape) {
+    /* Hero не на всю висоту, бо екран низький */
     .hero {
         min-height: auto !important;
         padding: 95px 0 36px 0;
@@ -1210,7 +1378,7 @@ body.modal-open {
 }
 
 /* =====================================================
-   ДУЖЕ МАЛІ ЕКРАНИ < 380px (iPhone SE, Galaxy A01…)
+   ДУЖЕ МАЛІ ЕКРАНИ (<380px: iPhone SE, Galaxy A01…)
    ===================================================== */
 @media (max-width: 380px) {
     .section-padding { padding: 40px 0; }
@@ -1218,10 +1386,10 @@ body.modal-open {
     .hero h1 { font-size: 1.5rem !important; }
     .hero .lead { font-size: 0.875rem; }
 
-    /* Navbar бренд — щоб вмістилось на 320px */
+    /* Менший логотип, щоб вмістився на 320px */
     .navbar-brand { font-size: 1.1rem !important; }
 
-    /* Timeline — найменший варіант */
+    /* Таймлайн — найкомпактніший варіант */
     .timeline-container { margin-left: 0; padding-left: 20px; }
     .timeline-dot {
         left: -29px;
@@ -1234,28 +1402,26 @@ body.modal-open {
     .timeline-desc { font-size: 13px; }
     .timeline-time-badge { font-size: 9px; padding: 4px 8px; letter-spacing: 0.5px; }
 
-    /* Акордеон */
+    /* Акордеон — найменший варіант */
     .v-acc-head { gap: 10px; padding: 16px 0; }
     .v-acc-title { font-size: 11px !important; }
     .v-acc-toggle { width: 26px; height: 26px; font-size: 11px; }
 
-
-    /* Portfolio */
+    /* Портфоліо */
     .portfolio-img { height: 180px; }
 
-    /* Buttons */
+    /* Кнопки */
     .btn-dark, .btn-outline-dark {
         padding: 12px 20px !important;
         font-size: 14px;
     }
 }
 
-/* ===== Тосты (всплывающие уведомления) =====
-   Вставь этот блок в конец своего style.css.
-   Фон у всех тостов чёрный; тип различается цветом иконки.
-   Селекторы сделаны как .toast-msg.toast-... — так они
-   гарантированно перекроют любые старые правила для тостов. */
+/* =====================================================
+   TOAST-СПОВІЩЕННЯ (актуальний набір стилів)
+   ===================================================== */
 
+/* Контейнер тостів справа зверху (pointer-events: none — не блокує кліки під ним) */
 #toastContainer {
   position: fixed;
   top: 24px;
@@ -1264,9 +1430,10 @@ body.modal-open {
   display: flex;
   flex-direction: column;
   gap: 12px;
-  pointer-events: none;          /* контейнер не перехватывает клики по странице */
+  pointer-events: none;       
 }
 
+/* Окреме сповіщення (стартовий, прихований стан — виїжджає справа) */
 .toast-msg {
   display: flex;
   align-items: center;
@@ -1275,7 +1442,7 @@ body.modal-open {
   max-width: 380px;
   padding: 14px 18px;
   border-radius: 14px;
-  background: #1a1a1a;                          /* практически чёрный; для чистого чёрного поставь #000 */
+  background: #1a1a1a;                         
   border: 1px solid rgba(255, 255, 255, 0.08);
   color: #fff;
   font-family: 'Inter', system-ui, sans-serif;
@@ -1283,36 +1450,33 @@ body.modal-open {
   font-weight: 600;
   line-height: 1.4;
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
-  pointer-events: auto;
-  /* стартовое (скрытое) состояние */
+  pointer-events: auto;       /* сам тост клікабельний */
+  /* стартовий (прихований) стан */
   opacity: 0;
   transform: translateX(120%);
   transition: opacity .32s ease,
               transform .32s cubic-bezier(.21, 1.02, .73, 1);
 }
 
-/* класс .show добавляется из script.js, когда тост появляется */
+/* Клас додається, коли з'являється тост */
 .toast-msg.show {
   opacity: 1;
   transform: translateX(0);
 }
 
+/* Іконка в тості */
 .toast-icon {
   font-size: 20px;
   line-height: 1;
   flex-shrink: 0;
 }
 
-/* --- Чёрный фон у всех; тип различаем по цвету иконки --- */
-/* Тостами показываются только success / limit / error.
-   Валидация полей («введіть ім'я», «коректний номер» тощо) выводится
-   баннером внутри модального окна (#validationBanner), а не тостом —
-   поэтому отдельного toast-warning здесь нет. */
-.toast-msg.toast-success .toast-icon { color: #22c55e; }   /* успех — «Заявку відправлено!» */
-.toast-msg.toast-error   .toast-icon { color: #f87171; }   /* ошибка отправки / нет связи с сервером */
-.toast-msg.toast-limit   .toast-icon { color: #60a5fa; }   /* лимит запросов (429) */
+/* Кольори іконки за типом тоста */
+.toast-msg.toast-success .toast-icon { color: #22c55e; }   /* успіх — зелений */
+.toast-msg.toast-error   .toast-icon { color: #f87171; }   /* помилка — червоний */
+.toast-msg.toast-limit   .toast-icon { color: #60a5fa; }   /* ліміт — синій */
 
-/* --- Мобильные экраны: прижимаем к низу на всю ширину --- */
+/* Тости на мобільних — знизу, на всю ширину */
 @media (max-width: 480px) {
   #toastContainer {
     top: auto;
