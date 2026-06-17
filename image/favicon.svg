@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- Фавікон Dmytro Kvasha · літера D · чорний скруглений квадрат + біла літера, шрифт Inter -->
+  <rect width="512" height="512" rx="112" fill="#111"/>
+  <text x="256" y="256" dominant-baseline="central" text-anchor="middle" font-family="Inter, Arial, sans-serif" font-weight="700" font-size="300" fill="#fff">D</text>
+</svg>
